@@ -1,0 +1,55 @@
+name,price,unit,category
+Tomatoes,3.50,lb,Vegetables
+Roma Tomatoes,3.00,lb,Vegetables
+Cherry Tomatoes,4.50,lb,Vegetables
+Heirloom Tomatoes,5.00,lb,Vegetables
+Lettuce (head),3.00,each,Vegetables
+Romaine Lettuce,3.50,each,Vegetables
+Kale (bunch),3.50,each,Vegetables
+Spinach (bunch),4.00,each,Vegetables
+Swiss Chard,3.50,each,Vegetables
+Collard Greens,3.00,each,Vegetables
+Carrots,3.00,lb,Vegetables
+Beets,3.50,lb,Vegetables
+Radishes (bunch),2.50,each,Vegetables
+Cucumbers,2.00,each,Vegetables
+Zucchini,3.00,lb,Vegetables
+Yellow Squash,3.00,lb,Vegetables
+Bell Peppers,1.50,each,Vegetables
+Jalapeños,4.00,lb,Vegetables
+Onions,2.50,lb,Vegetables
+Green Onions,2.00,each,Vegetables
+Garlic,1.00,each,Vegetables
+Sweet Potatoes,3.00,lb,Vegetables
+Potatoes,2.50,lb,Vegetables
+Corn on the Cob,1.00,each,Vegetables
+Green Beans,4.00,lb,Vegetables
+Apples,4.00,lb,Fruits
+Oranges,3.50,lb,Fruits
+Bananas,2.00,lb,Fruits
+Mangoes,2.50,each,Fruits
+Papayas,4.00,each,Fruits
+Avocados,2.00,each,Fruits
+Strawberries (pint),5.00,each,Fruits
+Blueberries (pint),6.00,each,Fruits
+Grapes,4.50,lb,Fruits
+Watermelon (whole),8.00,each,Fruits
+Cantaloupe,5.00,each,Fruits
+Lemons,0.75,each,Fruits
+Limes,0.50,each,Fruits
+Basil (bunch),2.50,each,Herbs
+Cilantro (bunch),2.00,each,Herbs
+Mint (bunch),2.50,each,Herbs
+Parsley (bunch),2.00,each,Herbs
+Rosemary (bunch),3.00,each,Herbs
+Thyme (bunch),3.00,each,Herbs
+Oregano (bunch),2.50,each,Herbs
+Dill (bunch),2.50,each,Herbs
+Eggs (dozen),6.00,each,Dairy & Eggs
+Eggs (half dozen),3.50,each,Dairy & Eggs
+Duck Eggs (half dozen),6.00,each,Dairy & Eggs
+Honey (8oz),8.00,each,Other
+Honey (16oz),14.00,each,Other
+Hot Sauce (bottle),7.00,each,Other
+Jam (jar),6.00,each,Other
+Pickles (jar),5.00,each,Other
