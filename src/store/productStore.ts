@@ -37,6 +37,8 @@ export const useProductStore = create<ProductState>()(
 
         // Try to connect to Firebase
         const connectFirebase = async () => {
+          if (!db) return () => {};
+
           try {
             const { collection, onSnapshot, query, where } = await import('firebase/firestore');
 

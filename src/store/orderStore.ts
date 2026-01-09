@@ -82,6 +82,8 @@ export const useOrderStore = create<OrderState>()(
 
         // Firebase subscription
         const connectFirebase = async () => {
+          if (!db) return () => {};
+
           try {
             const { collection, onSnapshot, query, where, orderBy, Timestamp } = await import('firebase/firestore');
 
