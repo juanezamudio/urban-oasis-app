@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAuthStore, getCurrentPins, updatePins } from '../store/authStore';
 import { useProductStore } from '../store/productStore';
 import { useCartStore } from '../store/cartStore';
 import { useOrderStore } from '../store/orderStore';
@@ -8,33 +7,48 @@ import { ProductGrid } from '../components/ProductGrid';
 import { AddItemModal } from '../components/AddItemModal';
 import { CustomItemModal } from '../components/CustomItemModal';
 import { Cart } from '../components/Cart';
+import { BottomNav } from '../components/BottomNav';
+import { UndoToast } from '../components/UndoToast';
+import { PaymentMethodModal } from '../components/PaymentMethodModal';
+import { ReceiptModal } from '../components/ReceiptModal';
+import { SyncStatus } from '../components/SyncStatus';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { OnboardingTour, type TourStep } from '../components/OnboardingTour';
 import { useOnboarding } from '../hooks/useOnboarding';
-import type { Product } from '../types';
-import { formatCurrency } from '../lib/utils';
+import type { Product, CartItem, PaymentMethod, Order } from '../types';
 import logo from '../assets/uop-logo.png';
 
 export function POS() {
-  const navigate = useNavigate();
-  const { role, logout } = useAuthStore();
-  const { products, isLoading, subscribeToProducts } = useProductStore();
-  const { items, addItem, clearCart, getTotal } = useCartStore();
-  const { createOrder } = useOrderStore();
+  const { role } = useAuthStore();
+  const { products, isLoading, subscribeToProducts, addProduct } = useProductStore();
+  const { items, addItem, clearCart, restoreItems, getTotal } = useCartStore();
+  const { createOrder, deleteOrder } = useOrderStore();
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [lastOrderTotal, setLastOrderTotal] = useState(0);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastOrder, setLastOrder] = useState<Order | null>(null);
+
+  // Payment and checkout state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Undo state
+  const [showUndoToast, setShowUndoToast] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState<string | null>(null);
+  const [lastCartItems, setLastCartItems] = useState<CartItem[]>([]);
 
   const { isActive: isTourActive, completeOnboarding, skipOnboarding, restartOnboarding } = useOnboarding(
     role === 'admin' ? 'admin' : 'volunteer'
   );
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [volunteerPin, setVolunteerPin] = useState('');
+  const [adminPin, setAdminPin] = useState('');
 
   const tourSteps: TourStep[] = useMemo(() => {
     const baseSteps: TourStep[] = [
@@ -91,6 +105,14 @@ export function POS() {
     return unsubscribe;
   }, [subscribeToProducts]);
 
+  useEffect(() => {
+    if (showPinModal) {
+      const pins = getCurrentPins();
+      setVolunteerPin(pins.volunteerPin);
+      setAdminPin(pins.adminPin);
+    }
+  }, [showPinModal]);
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setIsAddModalOpen(true);
@@ -100,7 +122,10 @@ export function POS() {
     addItem(product, quantity);
   };
 
-  const handleCustomItemCreate = (product: Product) => {
+  const handleCustomItemCreate = async (product: Product, saveToDatabase: boolean) => {
+    if (saveToDatabase) {
+      await addProduct(product);
+    }
     setSelectedProduct(product);
     setIsAddModalOpen(true);
   };
@@ -110,16 +135,24 @@ export function POS() {
     .filter(cat => cat !== 'Other')
     .sort();
 
-  const handleCheckout = async () => {
+  const handleCheckoutClick = () => {
     if (items.length === 0) return;
+    setShowPaymentModal(true);
+  };
 
+  const handlePaymentSelect = async (paymentMethod: PaymentMethod) => {
     setIsProcessing(true);
     try {
       const total = getTotal();
-      await createOrder(items, total);
-      setLastOrderTotal(total);
+      // Store cart items before clearing for potential undo
+      setLastCartItems([...items]);
+      const order = await createOrder(items, total, paymentMethod);
+      setLastOrderId(order.id);
+      setLastOrder(order);
       clearCart();
-      setShowSuccess(true);
+      setShowPaymentModal(false);
+      // Show undo toast instead of receipt modal
+      setShowUndoToast(true);
     } catch (error) {
       console.error('Failed to create order:', error);
     } finally {
@@ -127,9 +160,34 @@ export function POS() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleUndo = useCallback(async () => {
+    if (lastOrderId && lastCartItems.length > 0) {
+      // Restore cart items
+      restoreItems(lastCartItems);
+      // Delete the order
+      await deleteOrder(lastOrderId);
+      // Reset undo state
+      setShowUndoToast(false);
+      setLastOrderId(null);
+      setLastCartItems([]);
+      setLastOrder(null);
+    }
+  }, [lastOrderId, lastCartItems, restoreItems, deleteOrder]);
+
+  const handleUndoExpire = useCallback(() => {
+    setShowUndoToast(false);
+    setLastOrderId(null);
+    setLastCartItems([]);
+    // Show receipt modal after undo expires
+    setShowReceipt(true);
+  }, []);
+
+  const handleSavePins = () => {
+    if (volunteerPin.length !== 4 || adminPin.length !== 4) {
+      return;
+    }
+    updatePins(volunteerPin, adminPin);
+    setShowPinModal(false);
   };
 
   return (
@@ -137,7 +195,7 @@ export function POS() {
       <div className="w-full max-w-7xl flex flex-col h-full sm:h-[calc(100vh-3rem)] sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden sm:pt-4">
         {/* Header */}
         <header className="px-4 sm:px-6 pt-4 pb-4 safe-top">
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
             <div data-tour="header" className="flex items-center gap-3 sm:gap-4 bg-gradient-to-b from-stone-700/60 to-stone-800/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-stone-400/40 shadow-lg shadow-black/20 ring-1 ring-white/5">
               <img src={logo} alt="Urban Oasis" className="h-20 sm:h-24" />
               <h1 className="font-display font-bold tracking-tight" style={{ lineHeight: '0.9' }}>
@@ -147,6 +205,7 @@ export function POS() {
                 </span>
               </h1>
             </div>
+            <SyncStatus />
           </div>
         </header>
 
@@ -159,7 +218,7 @@ export function POS() {
       />
 
       {/* Cart */}
-      <Cart onCheckout={handleCheckout} isProcessing={isProcessing} />
+      <Cart onCheckout={handleCheckoutClick} isProcessing={isProcessing} />
 
       {/* Add Item Modal */}
       <AddItemModal
@@ -177,41 +236,24 @@ export function POS() {
         categories={categories}
       />
 
-      {/* Success Modal */}
-      <Modal isOpen={showSuccess} onClose={() => setShowSuccess(false)}>
-        <div className="p-6 text-center">
-          <div className="w-16 h-16 bg-emerald-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-emerald-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h2 className="font-display text-xl font-semibold text-stone-900 mb-2">
-            Order Complete!
-          </h2>
-          <p className="text-stone-600 mb-2">Collect payment from customer</p>
-          <p className="font-display text-3xl font-bold text-emerald-700 mb-6">
-            {formatCurrency(lastOrderTotal)}
-          </p>
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            onClick={() => setShowSuccess(false)}
-          >
-            Next Customer
-          </Button>
-        </div>
-      </Modal>
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        total={getTotal()}
+        isProcessing={isProcessing}
+        onSelect={handlePaymentSelect}
+        onClose={() => setShowPaymentModal(false)}
+      />
+
+      {/* Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceipt}
+        order={lastOrder}
+        onClose={() => {
+          setShowReceipt(false);
+          setLastOrder(null);
+        }}
+      />
 
       {/* Settings Modal */}
       <Modal isOpen={showSettings} onClose={() => setShowSettings(false)}>
@@ -221,6 +263,25 @@ export function POS() {
           </h2>
 
           <div className="space-y-4">
+            {role === 'admin' && (
+              <div className="bg-stone-100 rounded-xl p-4">
+                <h3 className="font-medium text-stone-900 mb-1">PIN Settings</h3>
+                <p className="text-sm text-stone-600 mb-3">
+                  Change the volunteer and admin access PINs
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowPinModal(true);
+                  }}
+                >
+                  Change PINs
+                </Button>
+              </div>
+            )}
+
             <div className="bg-stone-100 rounded-xl p-4">
               <h3 className="font-medium text-stone-900 mb-1">Help & Tour</h3>
               <p className="text-sm text-stone-600 mb-3">
@@ -251,50 +312,66 @@ export function POS() {
         </div>
       </Modal>
 
-      {/* Floating Bottom Nav */}
-      <div className="fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div data-tour="nav" className="flex items-center gap-1 bg-stone-800 border border-stone-700 rounded-full px-2 py-2 shadow-2xl">
-          {/* Home/POS - Active */}
-          <button className="flex flex-col items-center justify-center w-14 h-10 rounded-full bg-emerald-600 text-white">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={() => setShowSettings(true)}
-            className="flex flex-col items-center justify-center w-14 h-10 rounded-full text-stone-400 hover:bg-stone-700 hover:text-stone-200 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
-
-          {/* Admin - Only show if admin */}
-          {role === 'admin' && (
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex flex-col items-center justify-center w-14 h-10 rounded-full text-stone-400 hover:bg-stone-700 hover:text-stone-200 transition-colors"
+      {/* PIN Modal */}
+      <Modal isOpen={showPinModal} onClose={() => setShowPinModal(false)}>
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-stone-900 mb-4">Change PINs</h2>
+          <div className="space-y-4 mb-6">
+            <Input
+              label="Volunteer PIN"
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={volunteerPin}
+              onChange={(e) =>
+                setVolunteerPin(e.target.value.replace(/\D/g, ''))
+              }
+              placeholder="4 digits"
+            />
+            <Input
+              label="Admin PIN"
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={adminPin}
+              onChange={(e) => setAdminPin(e.target.value.replace(/\D/g, ''))}
+              placeholder="4 digits"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowPinModal(false)}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </button>
-          )}
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="flex flex-col items-center justify-center w-14 h-10 rounded-full text-stone-400 hover:bg-stone-700 hover:text-stone-200 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </button>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1"
+              onClick={handleSavePins}
+              disabled={volunteerPin.length !== 4 || adminPin.length !== 4}
+            >
+              Save
+            </Button>
+          </div>
         </div>
-      </div>
+      </Modal>
+
+      {/* Floating Bottom Nav */}
+      <BottomNav
+        activePage="pos"
+        onSettingsClick={() => setShowSettings(true)}
+        tourTarget="nav"
+      />
+
+      {/* Undo Toast */}
+      <UndoToast
+        isVisible={showUndoToast}
+        total={lastOrder?.total ?? 0}
+        onUndo={handleUndo}
+        onExpire={handleUndoExpire}
+      />
 
       {/* Onboarding Tour */}
       <OnboardingTour

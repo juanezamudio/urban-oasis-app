@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Order, CartItem } from '../types';
+import type { Order, CartItem, PaymentMethod } from '../types';
 import { db, isFirebaseConfigured } from '../lib/firebase';
 import { generateId, getDeviceId, getTodayStart, isSameDay } from '../lib/utils';
 
@@ -8,16 +8,20 @@ interface OrderState {
   orders: Order[];
   allOrders: Order[];
   isLoading: boolean;
+  isSyncing: boolean;
   error: string | null;
   setOrders: (orders: Order[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  createOrder: (items: CartItem[], total: number) => Promise<Order>;
+  createOrder: (items: CartItem[], total: number, paymentMethod: PaymentMethod) => Promise<Order>;
+  deleteOrder: (orderId: string) => Promise<void>;
   subscribeToTodaysOrders: () => () => void;
   subscribeToOrdersByDateRange: (startDate: Date, endDate: Date) => () => void;
   getOrdersByDateRange: (startDate: Date, endDate: Date) => Order[];
   getTodayTotal: () => number;
   getTodayOrderCount: () => number;
+  getPendingCount: () => number;
+  syncPendingOrders: () => Promise<void>;
 }
 
 export const useOrderStore = create<OrderState>()(
@@ -26,13 +30,14 @@ export const useOrderStore = create<OrderState>()(
       orders: [],
       allOrders: [],
       isLoading: false,
+      isSyncing: false,
       error: null,
 
       setOrders: (orders) => set({ orders }),
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
 
-      createOrder: async (items, total) => {
+      createOrder: async (items, total, paymentMethod) => {
         const order: Order = {
           id: generateId(),
           items: items.map((item) => ({
@@ -43,6 +48,7 @@ export const useOrderStore = create<OrderState>()(
             lineTotal: item.lineTotal,
           })),
           total,
+          paymentMethod,
           createdAt: new Date(),
           createdBy: getDeviceId(),
           synced: !isFirebaseConfigured,
@@ -56,6 +62,7 @@ export const useOrderStore = create<OrderState>()(
             await addDoc(ordersRef, {
               items: order.items,
               total: order.total,
+              paymentMethod: order.paymentMethod,
               createdAt: Timestamp.fromDate(order.createdAt),
               createdBy: order.createdBy,
             });
@@ -72,6 +79,33 @@ export const useOrderStore = create<OrderState>()(
         }));
 
         return order;
+      },
+
+      deleteOrder: async (orderId: string) => {
+        // Remove from local state first
+        set((state) => ({
+          orders: state.orders.filter((order) => order.id !== orderId),
+          allOrders: state.allOrders.filter((order) => order.id !== orderId),
+        }));
+
+        // If Firebase is configured, try to delete there too
+        if (isFirebaseConfigured && db) {
+          try {
+            const { collection, query, where, getDocs, deleteDoc } = await import('firebase/firestore');
+            const ordersRef = collection(db, 'orders');
+
+            // Find the order document by matching the ID
+            // Since we use auto-generated Firebase IDs, we need to query
+            const q = query(ordersRef, where('__name__', '==', orderId));
+            const snapshot = await getDocs(q);
+
+            if (!snapshot.empty) {
+              await deleteDoc(snapshot.docs[0].ref);
+            }
+          } catch (error) {
+            console.warn('Failed to delete order from Firebase:', error);
+          }
+        }
       },
 
       subscribeToTodaysOrders: () => {
@@ -112,6 +146,7 @@ export const useOrderStore = create<OrderState>()(
                 const orders: Order[] = snapshot.docs.map((doc) => ({
                   id: doc.id,
                   ...doc.data(),
+                  paymentMethod: doc.data().paymentMethod || 'cash', // Default for old orders
                   createdAt: doc.data().createdAt?.toDate() || new Date(),
                   synced: true,
                 })) as Order[];
@@ -194,6 +229,7 @@ export const useOrderStore = create<OrderState>()(
                 const orders: Order[] = snapshot.docs.map((doc) => ({
                   id: doc.id,
                   ...doc.data(),
+                  paymentMethod: doc.data().paymentMethod || 'cash', // Default for old orders
                   createdAt: doc.data().createdAt?.toDate() || new Date(),
                   synced: true,
                 })) as Order[];
@@ -236,6 +272,53 @@ export const useOrderStore = create<OrderState>()(
         return get().orders.filter((order) =>
           isSameDay(new Date(order.createdAt), today)
         ).length;
+      },
+
+      getPendingCount: () => {
+        return get().allOrders.filter((order) => !order.synced).length;
+      },
+
+      syncPendingOrders: async () => {
+        if (!isFirebaseConfigured || !db) return;
+
+        const pendingOrders = get().allOrders.filter((order) => !order.synced);
+        if (pendingOrders.length === 0) return;
+
+        set({ isSyncing: true });
+
+        try {
+          const { collection, addDoc, Timestamp } = await import('firebase/firestore');
+          const ordersRef = collection(db, 'orders');
+
+          for (const order of pendingOrders) {
+            try {
+              await addDoc(ordersRef, {
+                items: order.items,
+                total: order.total,
+                paymentMethod: order.paymentMethod,
+                createdAt: Timestamp.fromDate(new Date(order.createdAt)),
+                createdBy: order.createdBy,
+                localId: order.id, // Keep reference to local ID
+              });
+
+              // Mark as synced
+              set((state) => ({
+                allOrders: state.allOrders.map((o) =>
+                  o.id === order.id ? { ...o, synced: true } : o
+                ),
+                orders: state.orders.map((o) =>
+                  o.id === order.id ? { ...o, synced: true } : o
+                ),
+              }));
+            } catch (error) {
+              console.warn(`Failed to sync order ${order.id}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error('Error during sync:', error);
+        } finally {
+          set({ isSyncing: false });
+        }
       },
     }),
     {

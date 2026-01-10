@@ -18,10 +18,13 @@ export interface CartItem {
   lineTotal: number;
 }
 
+export type PaymentMethod = 'cash' | 'card' | 'voucher';
+
 export interface Order {
   id: string;
   items: OrderItem[];
   total: number;
+  paymentMethod: PaymentMethod;
   createdAt: Date;
   createdBy: string;
   synced: boolean;

@@ -8,25 +8,48 @@ A mobile-first Progressive Web App (PWA) for volunteers at the Urban Oasis Proje
 - **Product Grid** - Beautiful card layout with search and category filtering
 - **Quick Price Calculation** - Numeric keypad for entering weight (lbs) or quantity
 - **Running Cart Total** - See the order total update in real-time
+- **Cart Editing** - Adjust quantities with +/- buttons directly in cart
 - **Order Management** - Complete orders with one tap
-- **Custom Item Entry** - Add items not in the product list with name, price, and category
+- **Payment Method Selection** - Choose cash, card, or voucher at checkout
+- **Undo Orders** - 5-second window to undo accidental checkouts and restore cart
+- **Custom Item Entry** - Add items not in the product list with name, price, unit, and category
+- **Save Custom Items** - Option to save custom items to database for future use
 - **Alphabetical Sorting** - Products sorted A-Z for easy browsing
 
 ### Admin Dashboard
 - **Order History** - View today's orders or filter by custom date range
 - **CSV Export** - Export orders to CSV for accounting/record-keeping
 - **Product Management** - Upload products via CSV with preview before confirming
+- **Delete Orders/Products** - Remove individual orders or products with confirmation modal
 - **PIN Settings** - Update volunteer and admin access PINs
+- **Insights Tab** - Sales analytics with key metrics and visualizations:
+  - Total revenue and orders with per-hour averages
+  - Average order value, largest/smallest orders
+  - Top product and category by revenue
+  - Peak sales hour, items sold, items per order
+  - Payment method breakdown (cash/card/voucher) with progress bars
+  - Category sales breakdown with progress bars
+  - Top products by revenue and quantity (charts + data tables)
+  - Daily sales trend area chart
 
 ### User Experience
 - **Onboarding Tour** - Guided tooltip tour for new users (volunteers and admins)
-- **Settings Access** - Volunteers can access settings and restart tour
+- **Unified Navigation** - Consistent bottom nav bar across all pages
+- **Settings Access** - Settings accessible from nav bar (PIN management for admins, tour restart)
 - **Mobile Optimized** - Horizontally scrollable filters, hidden scrollbars, fixed viewport
 - **Branded Design** - Consistent header badge with logo and "Harvest Point™" wordmark
+
+### Digital Receipts
+- **Screen Receipt** - Styled receipt displayed after each order with order details
+- **Share via AirDrop** - Native share button for iOS/Android (AirDrop, Messages, etc.)
+- **QR Code Receipt** - Customers scan to view receipt on their phone
+- **Persistent Receipts** - Receipts accessible via URL, fetched from Firebase
 
 ### PWA & Offline
 - **Installable** - Install prompt with platform-specific instructions (iOS, Android, desktop)
 - **Offline Support** - Works without internet using local storage
+- **Offline Order Queue** - Orders saved locally when offline, auto-sync when back online
+- **Sync Status Indicator** - Visual indicator showing offline/syncing/pending status
 - **Real-time Sync** - All devices see the same products and orders (when Firebase enabled)
 
 ## Quick Start
@@ -136,17 +159,24 @@ src/
 │   ├── ui/              # Base components (Button, Modal, Input)
 │   ├── ProductCard      # Product display card
 │   ├── ProductGrid      # Grid with search/filter
-│   ├── Cart             # Shopping cart
+│   ├── Cart             # Shopping cart with quantity editing
+│   ├── BottomNav        # Reusable navigation bar
+│   ├── UndoToast        # Undo order notification
 │   ├── AddItemModal     # Quantity selection modal
 │   ├── CustomItemModal  # Custom item entry modal
+│   ├── PaymentMethodModal # Payment selection (cash/card/voucher)
+│   ├── ReceiptModal     # Digital receipt with QR code
+│   ├── SyncStatus       # Offline/sync status indicator
 │   ├── OnboardingTour   # Guided tour component
 │   └── InstallPrompt    # PWA install instructions
 ├── hooks/
-│   └── useOnboarding    # Tour state management
+│   ├── useOnboarding    # Tour state management
+│   └── useOnlineStatus  # Network connectivity detection
 ├── pages/
 │   ├── Login            # PIN entry
 │   ├── POS              # Main volunteer view
-│   └── Admin            # Admin dashboard
+│   ├── Admin            # Admin dashboard
+│   └── Receipt          # Public receipt view (via QR code)
 ├── store/
 │   ├── authStore        # Authentication & PINs
 │   ├── cartStore        # Shopping cart
@@ -165,6 +195,8 @@ src/
 
 ### Completed
 - [x] Core POS functionality (products, cart, checkout)
+- [x] Cart quantity editing with +/- buttons
+- [x] Undo order feature (5-second window to restore cart)
 - [x] Admin dashboard with orders and products tabs
 - [x] CSV product upload with preview
 - [x] CSV order export
@@ -172,25 +204,39 @@ src/
 - [x] PIN-based authentication (volunteer/admin roles)
 - [x] PWA setup with install prompts
 - [x] Onboarding tour for new users
-- [x] Custom item entry for unlisted products
-- [x] Settings modal for volunteers
+- [x] Custom item entry with unit selection (each/lb)
+- [x] Save custom items to database option
+- [x] Reusable bottom navigation component
+- [x] Unified settings modal across all pages
 - [x] Consistent branding across all pages
 - [x] Mobile-optimized UI (scrolling, viewport, touch)
 - [x] Alphabetical product sorting
 - [x] Input normalization (title case names, formatted prices)
 - [x] Firebase cloud sync with Firestore
+- [x] Payment method tracking (cash, card, voucher selection at checkout)
+- [x] Insights dashboard with key metrics and visualizations
+- [x] Payment breakdown analytics with progress bars
+- [x] Category sales breakdown with progress bars
+- [x] Top products charts (by revenue and quantity)
+- [x] Daily sales trend area chart
+- [x] Digital receipt with QR code and native share (AirDrop)
+- [x] Receipts accessible via URL from any device
+- [x] Offline order queue with auto-sync
+- [x] Sync status indicator (offline/syncing/pending)
+- [x] Admin delete functionality (orders and products)
+- [x] Delete confirmation modals
+- [x] Consistent category badge colors across app
 
-### TODO
-- [ ] Offline queue for orders (sync when back online)
-- [ ] Print/email receipt functionality
+### Future Enhancements
+- [ ] Email receipt to customer
 - [ ] Inventory tracking (stock levels, low stock alerts)
-- [ ] Multiple payment method tracking (cash, card, etc.)
 - [ ] Shift management (start/end shift with cash counts)
 - [ ] Product image support
 - [ ] Barcode/QR code scanning
-- [ ] Multi-language support
-- [ ] Analytics dashboard (sales trends, popular items)
+- [ ] Multi-language support (Spanish)
+- [ ] Enhanced analytics (compare date ranges, export reports)
 - [ ] User activity logging
+- [ ] Vendor/supplier management
 
 ## License
 

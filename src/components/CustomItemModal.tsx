@@ -7,7 +7,7 @@ import type { Product } from '../types';
 interface CustomItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (product: Product) => void;
+  onAdd: (product: Product, saveToDatabase: boolean) => void;
   categories: string[];
 }
 
@@ -34,14 +34,18 @@ function normalizeName(input: string): string {
 export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomItemModalProps) {
   const [name, setName] = useState('');
   const [priceCents, setPriceCents] = useState(''); // Store as cents string (e.g., "1299" for $12.99)
+  const [unit, setUnit] = useState<'each' | 'lb'>('each');
   const [category, setCategory] = useState('');
+  const [saveToDatabase, setSaveToDatabase] = useState(false);
 
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
       setName('');
       setPriceCents('');
+      setUnit('each');
       setCategory(categories[0] || 'Other');
+      setSaveToDatabase(false);
     }
   }, [isOpen, categories]);
 
@@ -76,11 +80,13 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
       id: `custom-${Date.now()}`,
       name: normalizedName,
       price: priceValue,
-      unit: 'each',
+      unit,
       category: category || 'Other',
+      active: true,
+      updatedAt: new Date(),
     };
 
-    onAdd(customProduct);
+    onAdd(customProduct, saveToDatabase);
     onClose();
   };
 
@@ -107,16 +113,26 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
             <label className="block text-sm font-medium text-stone-700 mb-1.5">
               Price
             </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500">$</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={displayPrice}
-                onChange={handlePriceChange}
-                placeholder="0.00"
-                className="w-full pl-8 pr-4 py-2.5 bg-white border border-stone-300 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500">$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={displayPrice}
+                  onChange={handlePriceChange}
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-4 py-2.5 bg-white border border-stone-300 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                />
+              </div>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value as 'each' | 'lb')}
+                className="px-4 py-2.5 bg-white border border-stone-300 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2357534e%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_8px_center] bg-no-repeat pr-10"
+              >
+                <option value="each">each</option>
+                <option value="lb">per lb</option>
+              </select>
             </div>
           </div>
 
@@ -137,6 +153,18 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
               <option value="Other">Other</option>
             </select>
           </div>
+
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={saveToDatabase}
+              onChange={(e) => setSaveToDatabase(e.target.checked)}
+              className="w-5 h-5 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            <span className="text-sm text-stone-700">
+              Save to products for future use
+            </span>
+          </label>
         </div>
 
         <div className="flex gap-3">

@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Urban Oasis POS',
-        short_name: 'UOP POS',
+        name: 'Harvest Point',
+        short_name: 'Harvest Point',
         description: 'Point of Sale app for Urban Oasis Project farmers market',
         theme_color: '#0c0a09',
         background_color: '#0c0a09',

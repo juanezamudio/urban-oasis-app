@@ -35,13 +35,11 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) {
-          onClose();
-        }
-      }}
     >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div
         className={cn(
           'relative bg-stone-300 w-full max-w-md rounded-2xl shadow-2xl transform transition-all animate-slide-up overflow-hidden border border-stone-400/50',

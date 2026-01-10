@@ -11,7 +11,7 @@ interface CartProps {
 
 export function Cart({ onCheckout, isProcessing }: CartProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { items, removeItem, clearCart, getTotal, getItemCount } = useCartStore();
+  const { items, updateItem, removeItem, clearCart, getTotal, getItemCount } = useCartStore();
 
   const total = getTotal();
   const itemCount = getItemCount();
@@ -73,12 +73,22 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-xl font-semibold text-stone-900">Cart</h2>
-            <button
-              onClick={clearCart}
-              className="text-sm font-medium text-red-600 hover:text-red-500 transition-colors"
-            >
-              Clear all
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={clearCart}
+                className="text-sm font-medium text-red-600 hover:text-red-500 transition-colors"
+              >
+                Clear all
+              </button>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="p-1 text-stone-500 hover:text-stone-700 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div className="max-h-[50vh] overflow-y-auto divide-y divide-stone-400/50">
@@ -87,16 +97,45 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-stone-900 truncate">{item.name}</p>
                   <p className="text-sm text-stone-600">
-                    {item.quantity} {item.unit === 'lb' ? 'lbs' : ''} x{' '}
-                    {formatCurrency(item.price)}
+                    {formatCurrency(item.price)}/{item.unit}
                   </p>
                 </div>
-                <p className="font-semibold text-emerald-700">
+
+                {/* Quantity Stepper */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      if (item.quantity <= 1) {
+                        removeItem(item.id);
+                      } else {
+                        updateItem(item.id, item.quantity - 1);
+                      }
+                    }}
+                    className="w-8 h-8 rounded-full bg-stone-200 hover:bg-stone-300 flex items-center justify-center text-stone-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <span className="w-10 text-center font-medium text-stone-900">
+                    {item.quantity}
+                  </span>
+                  <button
+                    onClick={() => updateItem(item.id, item.quantity + 1)}
+                    className="w-8 h-8 rounded-full bg-stone-200 hover:bg-stone-300 flex items-center justify-center text-stone-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+
+                <p className="font-semibold text-emerald-700 w-16 text-right">
                   {formatCurrency(item.lineTotal)}
                 </p>
                 <button
                   onClick={() => removeItem(item.id)}
-                  className="p-2 text-stone-500 hover:text-red-600 transition-colors"
+                  className="p-2 text-stone-400 hover:text-red-600 transition-colors"
                 >
                   <svg
                     className="w-5 h-5"
@@ -108,7 +147,7 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
                 </button>

@@ -13,6 +13,8 @@ interface ProductState {
   setError: (error: string | null) => void;
   subscribeToProducts: () => () => void;
   uploadProducts: (products: Product[]) => Promise<void>;
+  addProduct: (product: Product) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
   getCategories: () => string[];
 }
 
@@ -141,6 +143,69 @@ export const useProductStore = create<ProductState>()(
           }));
 
           set({ products: productsWithIds, isLoading: false, useLocalStorage: true });
+        }
+      },
+
+      addProduct: async (product) => {
+        // If Firebase is not configured, save locally
+        if (!isFirebaseConfigured || !db) {
+          const productWithId = {
+            ...product,
+            id: product.id || `local-${Date.now()}`,
+            updatedAt: new Date(),
+          };
+
+          set((state) => ({
+            products: [...state.products, productWithId],
+            useLocalStorage: true,
+          }));
+          return;
+        }
+
+        try {
+          const { collection, addDoc } = await import('firebase/firestore');
+
+          const productsRef = collection(db, 'products');
+          await addDoc(productsRef, {
+            name: product.name,
+            price: product.price,
+            unit: product.unit,
+            category: product.category,
+            active: true,
+            updatedAt: new Date(),
+          });
+          // Firebase subscription will update the local state automatically
+        } catch (error) {
+          console.warn('Firebase add product failed, saving locally:', error);
+
+          const productWithId = {
+            ...product,
+            id: product.id || `local-${Date.now()}`,
+            updatedAt: new Date(),
+          };
+
+          set((state) => ({
+            products: [...state.products, productWithId],
+            useLocalStorage: true,
+          }));
+        }
+      },
+
+      deleteProduct: async (productId: string) => {
+        // Remove from local state first
+        set((state) => ({
+          products: state.products.filter((product) => product.id !== productId),
+        }));
+
+        // If Firebase is configured, delete from there too
+        if (isFirebaseConfigured && db) {
+          try {
+            const { doc, deleteDoc } = await import('firebase/firestore');
+            const productRef = doc(db, 'products', productId);
+            await deleteDoc(productRef);
+          } catch (error) {
+            console.warn('Failed to delete product from Firebase:', error);
+          }
         }
       },
 
