@@ -94,7 +94,7 @@ export function InstallPrompt() {
             </svg>
           </div>
           <h2 className="font-display text-xl font-semibold text-stone-900 mb-2">
-            Install Urban Oasis POS
+            Install Harvest Point™
           </h2>
           <p className="text-stone-600 text-sm">
             Install this app on your device for quick access and offline use.
