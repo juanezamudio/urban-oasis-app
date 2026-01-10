@@ -98,14 +98,17 @@ export function downloadSampleCSV(): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportOrdersToCSV(orders: { id: string; total: number; createdAt: Date; items: { name: string; quantity: number; lineTotal: number }[] }[]): void {
+export function exportOrdersToCSV(orders: { id: string; total: number; createdAt: Date | string; items: { name: string; quantity: number; lineTotal: number }[] }[]): void {
   const rows = [['Order ID', 'Date', 'Item', 'Quantity', 'Line Total', 'Order Total']];
 
   orders.forEach((order) => {
+    const dateStr = typeof order.createdAt === 'string'
+      ? order.createdAt
+      : order.createdAt.toISOString();
     order.items.forEach((item, index) => {
       rows.push([
         index === 0 ? order.id : '',
-        index === 0 ? order.createdAt.toISOString() : '',
+        index === 0 ? dateStr : '',
         item.name,
         item.quantity.toString(),
         item.lineTotal.toFixed(2),

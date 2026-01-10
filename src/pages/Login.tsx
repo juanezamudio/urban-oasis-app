@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore, validatePin } from '../store/authStore';
 import { NumericKeypad } from '../components/NumericKeypad';
+import { InstallPrompt } from '../components/InstallPrompt';
+import logo from '../assets/uop-logo.png';
 
 export function Login() {
   const [pin, setPin] = useState('');
@@ -35,16 +37,20 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6">
-      <div className="w-full max-w-5xl flex flex-col items-center justify-center p-8 sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl">
+    <div className="h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
+      <div className="w-full max-w-7xl flex flex-col items-center justify-center p-8 sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-y-auto">
         <div className="w-full max-w-sm">
           {/* Logo/Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center mb-4">
-              <span className="text-4xl font-bold text-emerald-400 tracking-tight">Urban</span>
-              <span className="text-4xl font-bold text-stone-100 tracking-tight ml-2">Oasis</span>
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-3 sm:gap-4 bg-gradient-to-b from-stone-700/60 to-stone-800/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-stone-400/40 shadow-lg shadow-black/20 ring-1 ring-white/5">
+              <img src={logo} alt="Urban Oasis" className="h-20 sm:h-24" />
+              <h1 className="font-display font-bold tracking-tight" style={{ lineHeight: '0.9' }}>
+                <span className="block text-xl sm:text-2xl text-stone-50">Harvest</span>
+                <span className="block text-xl sm:text-2xl text-emerald-400">
+                  Point<span className="text-stone-500 text-xs sm:text-sm align-top ml-0.5">™</span>
+                </span>
+              </h1>
             </div>
-            <p className="text-stone-400 font-medium">Farmers Market POS</p>
           </div>
 
           {/* PIN Display */}
@@ -80,11 +86,7 @@ export function Login() {
             />
           </div>
 
-          {/* Help Text */}
-          <p className="text-center text-sm text-stone-500 mt-6">
-            Default PINs: Volunteer (1234) | Admin (0000)
-          </p>
-        </div>
+                  </div>
       </div>
 
       <style>{`
@@ -97,6 +99,8 @@ export function Login() {
           animation: shake 0.5s ease-in-out;
         }
       `}</style>
+
+      <InstallPrompt />
     </div>
   );
 }

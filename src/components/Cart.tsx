@@ -24,7 +24,7 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
     <>
       {/* Floating Cart Bar - positioned above bottom nav */}
       <div className="fixed bottom-[5.5rem] sm:bottom-[6.5rem] left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
-        <div className="bg-stone-800 rounded-2xl border border-stone-700 shadow-2xl px-4 py-3">
+        <div data-tour="cart" className="bg-stone-800 rounded-2xl border border-stone-700 shadow-2xl px-4 py-3">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsExpanded(true)}
@@ -49,12 +49,13 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
                 <p className="text-sm text-stone-400">
                   {itemCount} {itemCount === 1 ? 'item' : 'items'}
                 </p>
-                <p className="text-xl font-bold text-stone-50">
+                <p className="font-display text-xl font-bold text-stone-50">
                   {formatCurrency(total)}
                 </p>
               </div>
             </button>
             <Button
+              data-tour="checkout"
               variant="primary"
               size="lg"
               onClick={onCheckout}
@@ -71,7 +72,7 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
       <Modal isOpen={isExpanded} onClose={() => setIsExpanded(false)}>
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-stone-900">Cart</h2>
+            <h2 className="font-display text-xl font-semibold text-stone-900">Cart</h2>
             <button
               onClick={clearCart}
               className="text-sm font-medium text-red-600 hover:text-red-500 transition-colors"
@@ -117,8 +118,8 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
 
           <div className="border-t border-stone-400/50 mt-4 pt-4">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-medium text-stone-700">Total</span>
-              <span className="text-2xl font-bold text-emerald-700">
+              <span className="font-display text-lg font-medium text-stone-700">Total</span>
+              <span className="font-display text-2xl font-bold text-emerald-700">
                 {formatCurrency(total)}
               </span>
             </div>
@@ -138,8 +139,6 @@ export function Cart({ onCheckout, isProcessing }: CartProps) {
         </div>
       </Modal>
 
-      {/* Spacer for fixed elements */}
-      <div className="h-32" />
     </>
   );
 }

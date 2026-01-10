@@ -6,25 +6,34 @@ import { cn } from '../lib/utils';
 interface ProductGridProps {
   products: Product[];
   onProductClick: (product: Product) => void;
+  onCustomItemClick: () => void;
   isLoading?: boolean;
 }
 
-export function ProductGrid({ products, onProductClick, isLoading }: ProductGridProps) {
+export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoading }: ProductGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Get unique categories
-  const categories = Array.from(new Set(products.map((p) => p.category))).sort();
+  // Get unique categories, with "Other" always last
+  const categories = Array.from(new Set(products.map((p) => p.category)))
+    .sort()
+    .sort((a, b) => {
+      if (a === 'Other') return 1;
+      if (b === 'Other') return -1;
+      return 0;
+    });
 
-  // Filter products
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === null || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Filter and sort products alphabetically
+  const filteredProducts = products
+    .filter((product) => {
+      const matchesSearch = product.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        selectedCategory === null || product.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   if (isLoading) {
     return (
@@ -41,33 +50,44 @@ export function ProductGrid({ products, onProductClick, isLoading }: ProductGrid
     <div className="flex-1 flex flex-col min-h-0">
       {/* Search Bar */}
       <div className="px-4 sm:px-6 py-4 border-b border-stone-800">
-        <div className="relative">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        <div className="flex gap-3">
+          <div data-tour="search" className="relative flex-1">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-base text-stone-100 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
             />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-base text-stone-100 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
-          />
+          </div>
+          <button
+            onClick={onCustomItemClick}
+            className="px-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-stone-300 hover:bg-stone-700 hover:text-stone-100 transition-all flex items-center gap-2 whitespace-nowrap"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">Custom</span>
+          </button>
         </div>
       </div>
 
       {/* Category Filter */}
-      <div className="px-4 sm:px-6 py-4 border-b border-stone-800">
-        <div className="flex flex-wrap gap-2 sm:gap-3">
+      <div data-tour="categories" className="pl-4 sm:pl-6 py-4 border-b border-stone-800 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-3 pr-4 sm:pr-6">
           <button
             onClick={() => setSelectedCategory(null)}
             className={cn(
@@ -97,7 +117,7 @@ export function ProductGrid({ products, onProductClick, isLoading }: ProductGrid
       </div>
 
       {/* Product Grid */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div data-tour="products" className="flex-1 overflow-y-auto p-4 sm:p-6 pb-40">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
             <svg
@@ -113,15 +133,26 @@ export function ProductGrid({ products, onProductClick, isLoading }: ProductGrid
                 d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <p className="text-stone-500">No products found</p>
-            {searchQuery && (
+            <p className="text-stone-500 mb-4">No products found</p>
+            <div className="flex flex-col items-center gap-2">
               <button
-                onClick={() => setSearchQuery('')}
-                className="text-emerald-400 font-medium text-sm mt-2 hover:text-emerald-300 transition-colors"
+                onClick={onCustomItemClick}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full font-medium text-sm hover:bg-emerald-500 transition-colors"
               >
-                Clear search
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Custom Item
               </button>
-            )}
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-stone-400 font-medium text-sm hover:text-stone-300 transition-colors"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

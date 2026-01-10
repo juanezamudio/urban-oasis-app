@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore, getCurrentPins, updatePins } from '../store/authStore';
 import { useProductStore } from '../store/productStore';
@@ -6,11 +6,15 @@ import { useOrderStore } from '../store/orderStore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
+import { OnboardingTour, type TourStep } from '../components/OnboardingTour';
+import { useOnboarding } from '../hooks/useOnboarding';
 import { parseCSV, downloadSampleCSV, exportOrdersToCSV } from '../lib/csv';
 import { formatCurrency, formatDate } from '../lib/utils';
 import type { Product } from '../types';
+import logo from '../assets/uop-logo.png';
 
 type Tab = 'orders' | 'products' | 'settings';
+type DateView = 'today' | 'range';
 
 export function Admin() {
   const navigate = useNavigate();
@@ -19,6 +23,7 @@ export function Admin() {
   const {
     orders,
     subscribeToTodaysOrders,
+    subscribeToOrdersByDateRange,
     getTodayTotal,
     getTodayOrderCount,
   } = useOrderStore();
@@ -27,9 +32,52 @@ export function Admin() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewProducts, setPreviewProducts] = useState<Product[] | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [volunteerPin, setVolunteerPin] = useState('');
   const [adminPin, setAdminPin] = useState('');
+  const [dateView, setDateView] = useState<DateView>('today');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+  const { isActive: isTourActive, completeOnboarding, skipOnboarding, restartOnboarding } = useOnboarding('admin');
+
+  const adminTourSteps: TourStep[] = useMemo(() => [
+    {
+      target: '[data-tour="admin-tabs"]',
+      title: 'Admin Dashboard',
+      description: 'Welcome to the admin dashboard! Use these tabs to manage orders, products, and settings.',
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="orders-summary"]',
+      title: 'Sales Overview',
+      description: 'See today\'s order count and total sales at a glance. Switch between today and date range views.',
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="export-btn"]',
+      title: 'Export Orders',
+      description: 'Export your orders to a CSV file for accounting or record-keeping.',
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="orders-list"]',
+      title: 'Order History',
+      description: 'View all completed orders with their items and totals.',
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="admin-nav"]',
+      title: 'Navigation',
+      description: 'Switch back to the POS view or logout when you\'re done.',
+      placement: 'top',
+    },
+  ], []);
 
   useEffect(() => {
     // Wait for hydration before checking role
@@ -41,13 +89,28 @@ export function Admin() {
     }
 
     const unsubProducts = subscribeToProducts();
-    const unsubOrders = subscribeToTodaysOrders();
 
     return () => {
       unsubProducts();
+    };
+  }, [role, hasHydrated, navigate, subscribeToProducts]);
+
+  // Subscribe to orders based on date view
+  useEffect(() => {
+    if (!hasHydrated || role !== 'admin') return;
+
+    let unsubOrders: () => void;
+
+    if (dateView === 'today') {
+      unsubOrders = subscribeToTodaysOrders();
+    } else {
+      unsubOrders = subscribeToOrdersByDateRange(new Date(startDate), new Date(endDate));
+    }
+
+    return () => {
       unsubOrders();
     };
-  }, [role, hasHydrated, navigate, subscribeToProducts, subscribeToTodaysOrders]);
+  }, [hasHydrated, role, dateView, startDate, endDate, subscribeToTodaysOrders, subscribeToOrdersByDateRange]);
 
   useEffect(() => {
     const pins = getCurrentPins();
@@ -113,6 +176,21 @@ export function Admin() {
     setShowPinModal(false);
   };
 
+  // Computed values for display
+  const displayTotal = useMemo(() => {
+    if (dateView === 'today') {
+      return getTodayTotal();
+    }
+    return orders.reduce((sum, order) => sum + order.total, 0);
+  }, [dateView, orders, getTodayTotal]);
+
+  const displayOrderCount = useMemo(() => {
+    if (dateView === 'today') {
+      return getTodayOrderCount();
+    }
+    return orders.length;
+  }, [dateView, orders, getTodayOrderCount]);
+
   const handleExportOrders = () => {
     exportOrdersToCSV(orders);
   };
@@ -131,8 +209,8 @@ export function Admin() {
   // Show loading while hydrating
   if (!hasHydrated || role !== 'admin') {
     return (
-      <div className="min-h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6">
-        <div className="w-full max-w-5xl flex items-center justify-center">
+      <div className="h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
+        <div className="w-full max-w-7xl flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-stone-700 border-t-emerald-500 rounded-full animate-spin" />
         </div>
       </div>
@@ -140,25 +218,26 @@ export function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6">
-      <div className="w-full max-w-5xl flex flex-col min-h-screen sm:min-h-[calc(100vh-3rem)] sm:my-auto sm:max-h-[calc(100vh-3rem)] bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden sm:pt-4">
-        {/* Header - Minimal */}
+    <div className="h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
+      <div className="w-full max-w-7xl flex flex-col h-full sm:h-[calc(100vh-3rem)] sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden sm:pt-4">
+        {/* Header */}
         <header className="px-4 sm:px-6 pt-4 pb-4 safe-top">
           <div className="flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-stone-50 tracking-tight">
-                Admin Dashboard
+            <div className="flex items-center gap-3 sm:gap-4 bg-gradient-to-b from-stone-700/60 to-stone-800/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-stone-400/40 shadow-lg shadow-black/20 ring-1 ring-white/5">
+              <img src={logo} alt="Urban Oasis" className="h-20 sm:h-24" />
+              <h1 className="font-display font-bold tracking-tight" style={{ lineHeight: '0.9' }}>
+                <span className="block text-xl sm:text-2xl text-stone-50">Harvest</span>
+                <span className="block text-xl sm:text-2xl text-emerald-400">
+                  Point<span className="text-stone-500 text-xs sm:text-sm align-top ml-0.5">™</span>
+                </span>
               </h1>
-              <p className="text-xs font-medium text-emerald-400">
-                Urban Oasis POS
-              </p>
             </div>
           </div>
         </header>
 
       {/* Tabs */}
       <div className="bg-stone-900/95 backdrop-blur-md border-b border-stone-800 px-4">
-        <div className="flex gap-1">
+        <div data-tour="admin-tabs" className="flex gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -176,27 +255,84 @@ export function Admin() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-hidden">
         {activeTab === 'orders' && (
-          <div className="p-4">
+          <div className="p-4 h-full overflow-y-auto pb-24">
+            {/* Date View Toggle */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setDateView('today')}
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                  dateView === 'today'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-stone-700 text-stone-300 hover:bg-stone-600'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setDateView('range')}
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                  dateView === 'range'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-stone-700 text-stone-300 hover:bg-stone-600'
+                }`}
+              >
+                Date Range
+              </button>
+            </div>
+
+            {/* Date Range Picker */}
+            {dateView === 'range' && (
+              <div className="bg-stone-800 rounded-xl p-4 mb-4 border border-stone-700">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs text-stone-400 mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      max={endDate}
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-stone-400 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate}
+                      max={new Date().toISOString().split('T')[0]}
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div data-tour="orders-summary" className="grid grid-cols-2 gap-3 mb-6">
               <div className="bg-stone-300 rounded-2xl p-4 border border-stone-400/50 shadow-sm">
-                <p className="text-sm text-stone-600 mb-1">Today's Orders</p>
-                <p className="text-2xl font-bold text-stone-900">
-                  {getTodayOrderCount()}
+                <p className="text-sm text-stone-600 mb-1">
+                  {dateView === 'today' ? "Today's Orders" : 'Orders'}
+                </p>
+                <p className="font-display text-2xl font-bold text-stone-900">
+                  {displayOrderCount}
                 </p>
               </div>
               <div className="bg-stone-300 rounded-2xl p-4 border border-stone-400/50 shadow-sm">
-                <p className="text-sm text-stone-600 mb-1">Today's Total</p>
-                <p className="text-2xl font-bold text-emerald-700">
-                  {formatCurrency(getTodayTotal())}
+                <p className="text-sm text-stone-600 mb-1">
+                  {dateView === 'today' ? "Today's Total" : 'Total'}
+                </p>
+                <p className="font-display text-2xl font-bold text-emerald-700">
+                  {formatCurrency(displayTotal)}
                 </p>
               </div>
             </div>
 
             {/* Export Button */}
-            <div className="mb-4">
+            <div data-tour="export-btn" className="mb-4">
               <Button
                 variant="secondary"
                 size="sm"
@@ -208,17 +344,17 @@ export function Admin() {
             </div>
 
             {/* Orders List */}
-            <div className="bg-stone-300 rounded-2xl border border-stone-400/50 divide-y divide-stone-400/50 shadow-sm">
+            <div data-tour="orders-list" className="bg-stone-300 rounded-2xl border border-stone-400/50 divide-y divide-stone-400/50 shadow-sm">
               {orders.length === 0 ? (
                 <div className="p-8 text-center text-stone-600">
-                  No orders yet today
+                  {dateView === 'today' ? 'No orders yet today' : 'No orders in this date range'}
                 </div>
               ) : (
                 orders.map((order) => (
                   <div key={order.id} className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="font-medium text-emerald-700">
+                        <p className="font-display font-semibold text-emerald-700">
                           {formatCurrency(order.total)}
                         </p>
                         <p className="text-sm text-stone-600">
@@ -245,74 +381,30 @@ export function Admin() {
         )}
 
         {activeTab === 'products' && (
-          <div className="p-4">
-            {/* Upload Section */}
-            <div className="bg-stone-300 rounded-2xl p-6 border border-stone-400/50 mb-6 shadow-sm">
-              <h2 className="font-semibold text-stone-900 mb-4">Upload Products</h2>
-              <p className="text-sm text-stone-600 mb-4">
-                Upload a CSV file with columns: name, price, unit (lb/each), category
-              </p>
-
-              <div className="flex gap-3 mb-4">
-                <label className="flex-1">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                  <div className="border-2 border-dashed border-stone-400 rounded-xl p-6 text-center cursor-pointer hover:border-emerald-600 hover:bg-emerald-100/50 transition-colors">
-                    <svg
-                      className="w-8 h-8 text-stone-500 mx-auto mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <p className="text-sm text-stone-600">
-                      {isUploading ? 'Processing...' : 'Click to upload CSV'}
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              <button
-                onClick={downloadSampleCSV}
-                className="text-sm font-medium text-emerald-700 hover:text-emerald-600 transition-colors"
+          <div className="p-4 flex flex-col h-[calc(100vh-200px)] sm:h-[calc(100vh-220px)] overflow-hidden">
+            {/* Header with Upload Button */}
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <h2 className="font-semibold text-stone-100">
+                Products ({products.length})
+              </h2>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowUploadModal(true)}
               >
-                Download sample CSV
-              </button>
-
-              {uploadError && (
-                <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-xl">
-                  <p className="text-sm text-red-700 whitespace-pre-line">
-                    {uploadError}
-                  </p>
-                </div>
-              )}
+                Upload CSV
+              </Button>
             </div>
 
-            {/* Current Products */}
-            <div className="bg-stone-300 rounded-2xl border border-stone-400/50 shadow-sm">
-              <div className="p-4 border-b border-stone-400/50">
-                <h2 className="font-semibold text-stone-900">
-                  Current Products ({products.length})
-                </h2>
-              </div>
-              <div className="divide-y divide-stone-400/50 max-h-[50vh] overflow-y-auto">
+            {/* Products List */}
+            <div className="bg-stone-300 rounded-2xl border border-stone-400/50 shadow-sm flex-1 flex flex-col min-h-0">
+              <div className="divide-y divide-stone-400/50 overflow-y-auto flex-1">
                 {products.length === 0 ? (
                   <div className="p-8 text-center text-stone-600">
                     No products uploaded yet
                   </div>
                 ) : (
-                  products.map((product) => (
+                  [...products].sort((a, b) => a.name.localeCompare(b.name)).map((product) => (
                     <div
                       key={product.id}
                       className="p-4 flex items-center justify-between"
@@ -333,7 +425,7 @@ export function Admin() {
         )}
 
         {activeTab === 'settings' && (
-          <div className="p-4">
+          <div className="p-4 h-full overflow-y-auto pb-24 space-y-4">
             <div className="bg-stone-300 rounded-2xl p-6 border border-stone-400/50 shadow-sm">
               <h2 className="font-semibold text-stone-900 mb-4">PIN Settings</h2>
               <p className="text-sm text-stone-600 mb-4">
@@ -341,6 +433,16 @@ export function Admin() {
               </p>
               <Button variant="outline" onClick={() => setShowPinModal(true)}>
                 Change PINs
+              </Button>
+            </div>
+
+            <div className="bg-stone-300 rounded-2xl p-6 border border-stone-400/50 shadow-sm">
+              <h2 className="font-semibold text-stone-900 mb-4">Help & Tour</h2>
+              <p className="text-sm text-stone-600 mb-4">
+                View the guided tour again to learn how to use the app
+              </p>
+              <Button variant="outline" onClick={restartOnboarding}>
+                Restart Tour
               </Button>
             </div>
           </div>
@@ -397,6 +499,78 @@ export function Admin() {
         </div>
       </Modal>
 
+      {/* Upload Modal */}
+      <Modal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)}>
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-stone-900 mb-2">Upload Products</h2>
+          <p className="text-sm text-stone-600 mb-4">
+            Upload a CSV file with your products. This will replace all existing products.
+          </p>
+
+          {uploadError && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-xl">
+              <p className="text-sm text-red-800 whitespace-pre-line">
+                {uploadError}
+              </p>
+            </div>
+          )}
+
+          <div className="border-2 border-dashed border-stone-400 rounded-xl p-6 text-center mb-4">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => {
+                handleFileUpload(e);
+                setShowUploadModal(false);
+              }}
+              className="hidden"
+              id="csv-upload-modal"
+            />
+            <label
+              htmlFor="csv-upload-modal"
+              className="cursor-pointer block"
+            >
+              <svg
+                className="w-10 h-10 text-stone-500 mx-auto mb-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <p className="text-stone-700 font-medium mb-1">
+                Click to upload CSV
+              </p>
+              <p className="text-sm text-stone-500">
+                or drag and drop
+              </p>
+            </label>
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowUploadModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={downloadSampleCSV}
+            >
+              Download Sample
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* PIN Modal */}
       <Modal isOpen={showPinModal} onClose={() => setShowPinModal(false)}>
         <div className="p-6">
@@ -445,7 +619,7 @@ export function Admin() {
 
       {/* Floating Bottom Nav */}
       <div className="fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1 bg-stone-800 border border-stone-700 rounded-full px-2 py-2 shadow-2xl">
+        <div data-tour="admin-nav" className="flex items-center gap-1 bg-stone-800 border border-stone-700 rounded-full px-2 py-2 shadow-2xl">
           {/* Back to POS */}
           <button
             onClick={() => navigate('/pos')}
@@ -474,6 +648,14 @@ export function Admin() {
           </button>
         </div>
       </div>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        steps={adminTourSteps}
+        isActive={isTourActive}
+        onComplete={completeOnboarding}
+        onSkip={skipOnboarding}
+      />
 
       </div>
     </div>

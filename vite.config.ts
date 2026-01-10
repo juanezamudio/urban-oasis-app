@@ -7,13 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Urban Oasis POS',
         short_name: 'UOP POS',
         description: 'Point of Sale app for Urban Oasis Project farmers market',
-        theme_color: '#16a34a',
-        background_color: '#f9fafb',
+        theme_color: '#0c0a09',
+        background_color: '#0c0a09',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

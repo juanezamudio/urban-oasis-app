@@ -36,7 +36,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
         <h3 className="font-semibold text-stone-900 text-base leading-tight mb-1">
           {product.name}
         </h3>
-        <p className="text-emerald-700 font-bold text-xl mt-auto">
+        <p className="font-display text-emerald-700 font-bold text-xl mt-auto">
           {formatPrice(product.price, product.unit)}
         </p>
       </div>

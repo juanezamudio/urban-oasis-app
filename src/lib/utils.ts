@@ -34,14 +34,18 @@ export function getDeviceId(): string {
   return deviceId;
 }
 
-export function formatDate(date: Date): string {
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) {
+    return 'Invalid date';
+  }
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
-  }).format(date);
+  }).format(d);
 }
 
 export function isSameDay(date1: Date, date2: Date): boolean {
