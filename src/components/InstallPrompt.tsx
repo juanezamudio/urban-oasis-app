@@ -109,7 +109,7 @@ export function InstallPrompt() {
                 <span className="flex-shrink-0 w-6 h-6 bg-stone-300 rounded-full flex items-center justify-center text-xs font-medium">1</span>
                 <span>Tap the <strong>Share</strong> button <span className="inline-block w-5 h-5 align-middle">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 4v12m0-12l-4 4m4-4l4 4M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </span> at the bottom of Safari</span>
               </li>
@@ -131,7 +131,13 @@ export function InstallPrompt() {
             <ol className="text-sm text-stone-600 space-y-3">
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-stone-300 rounded-full flex items-center justify-center text-xs font-medium">1</span>
-                <span>Tap the <strong>menu</strong> button (three dots) in your browser</span>
+                <span>Tap the <strong>menu</strong> button <span className="inline-block w-5 h-5 align-middle">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="5" r="2"/>
+                    <circle cx="12" cy="12" r="2"/>
+                    <circle cx="12" cy="19" r="2"/>
+                  </svg>
+                </span> in your browser</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-stone-300 rounded-full flex items-center justify-center text-xs font-medium">2</span>

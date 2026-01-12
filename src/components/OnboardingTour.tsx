@@ -84,6 +84,21 @@ export function OnboardingTour({ steps, isActive, onComplete, onSkip }: Onboardi
     setPosition({ top, left, arrowPosition });
   }, [step, currentStep, steps.length]);
 
+  // Darken status bar when tour is active
+  useEffect(() => {
+    if (!isActive) return;
+
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    const originalColor = themeColorMeta?.getAttribute('content') || '#1c1917';
+
+    // Darken to match the tour overlay
+    themeColorMeta?.setAttribute('content', '#0a0a0a');
+
+    return () => {
+      themeColorMeta?.setAttribute('content', originalColor);
+    };
+  }, [isActive]);
+
   useEffect(() => {
     if (!isActive) {
       setCurrentStep(0);
