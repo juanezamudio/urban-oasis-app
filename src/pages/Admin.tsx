@@ -418,7 +418,7 @@ export function Admin() {
   // Show loading while hydrating
   if (!hasHydrated || role !== 'admin') {
     return (
-      <div className="h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
+      <div className="h-screen bg-stone-900 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
         <div className="w-full max-w-7xl flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-stone-700 border-t-emerald-500 rounded-full animate-spin" />
         </div>
@@ -427,7 +427,7 @@ export function Admin() {
   }
 
   return (
-    <div className="h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
+    <div className="h-screen bg-stone-900 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
       <div className="w-full max-w-7xl flex flex-col h-full sm:h-[calc(100vh-3rem)] sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden sm:pt-4">
         {/* Header */}
         <header className="px-4 sm:px-6 pt-8 sm:pt-4 pb-4 safe-top">

@@ -37,7 +37,7 @@ export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoa
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-stone-950">
+      <div className="flex-1 flex items-center justify-center bg-stone-900">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-stone-700 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
           <p className="text-stone-400">Loading products...</p>

@@ -11,7 +11,7 @@
   }
 
   body {
-    background-color: #0c0a09;
+    background-color: #1c1917;
     color: #e7e5e4;
     font-family: 'DM Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -56,7 +56,7 @@
 /* Browser mode only - fix safe area background color */
 @media not all and (display-mode: standalone) {
   html, body {
-    background-color: #0c0a09;
+    background-color: #1c1917;
     position: relative;
     overflow: auto;
     min-height: 100vh;
