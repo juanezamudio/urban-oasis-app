@@ -53,6 +53,22 @@
   }
 }
 
+/* Browser mode only - fix safe area background color */
+@media not all and (display-mode: standalone) {
+  html, body {
+    background-color: #0c0a09;
+    position: relative;
+    overflow: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
 @layer utilities {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
