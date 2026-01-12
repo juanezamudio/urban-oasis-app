@@ -37,7 +37,7 @@ export function Login() {
   };
 
   return (
-    <div className="h-screen bg-stone-900 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
+    <div className="login-container h-screen bg-stone-900 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
       <div className="w-full max-w-7xl flex flex-col items-center justify-center p-8 sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-y-auto">
         <div className="w-full max-w-sm">
           {/* Logo/Header */}

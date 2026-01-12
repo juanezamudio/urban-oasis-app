@@ -69,6 +69,13 @@
   }
 }
 
+/* PWA standalone mode - adjust login centering */
+@media all and (display-mode: standalone) {
+  .login-container {
+    padding-bottom: 15vh;
+  }
+}
+
 @layer utilities {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
