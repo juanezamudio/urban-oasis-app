@@ -126,16 +126,20 @@ export function OnboardingTour({ steps, isActive, onComplete, onSkip }: Onboardi
           <defs>
             <mask id="spotlight-mask">
               <rect x="0" y="0" width="100%" height="100%" fill="white" />
-              {targetRect && (
-                <rect
-                  x={targetRect.left - 4}
-                  y={targetRect.top - 4}
-                  width={targetRect.width + 8}
-                  height={targetRect.height + 8}
-                  rx="12"
-                  fill="black"
-                />
-              )}
+              {targetRect && (() => {
+                const safeY = Math.max(8, targetRect.top - 4);
+                const heightAdjustment = targetRect.top < 12 ? (12 - targetRect.top) : 0;
+                return (
+                  <rect
+                    x={targetRect.left - 4}
+                    y={safeY}
+                    width={targetRect.width + 8}
+                    height={targetRect.height + 8 - heightAdjustment}
+                    rx="12"
+                    fill="black"
+                  />
+                );
+              })()}
             </mask>
           </defs>
           <rect
@@ -150,17 +154,21 @@ export function OnboardingTour({ steps, isActive, onComplete, onSkip }: Onboardi
       </div>
 
       {/* Spotlight border/glow */}
-      {targetRect && (
-        <div
-          className="absolute border-2 border-emerald-500 rounded-xl pointer-events-none shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-          style={{
-            top: targetRect.top - 4,
-            left: targetRect.left - 4,
-            width: targetRect.width + 8,
-            height: targetRect.height + 8,
-          }}
-        />
-      )}
+      {targetRect && (() => {
+        const safeTop = Math.max(8, targetRect.top - 4);
+        const heightAdjustment = targetRect.top < 12 ? (12 - targetRect.top) : 0;
+        return (
+          <div
+            className="absolute border-2 border-emerald-500 rounded-xl pointer-events-none shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+            style={{
+              top: safeTop,
+              left: targetRect.left - 4,
+              width: targetRect.width + 8,
+              height: targetRect.height + 8 - heightAdjustment,
+            }}
+          />
+        );
+      })()}
 
       {/* Tooltip */}
       <div
