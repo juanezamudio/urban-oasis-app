@@ -194,7 +194,7 @@ export function POS() {
     <div className="h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
       <div className="w-full max-w-7xl flex flex-col h-full sm:h-[calc(100vh-3rem)] sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden sm:pt-4">
         {/* Header */}
-        <header className="px-4 sm:px-6 pt-4 pb-4 safe-top">
+        <header className="px-4 sm:px-6 pt-8 sm:pt-4 pb-4 safe-top">
           <div className="flex flex-col items-center gap-2">
             <div data-tour="header" className="flex items-center gap-3 sm:gap-4 bg-gradient-to-b from-stone-700/60 to-stone-800/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-stone-400/40 shadow-lg shadow-black/20 ring-1 ring-white/5">
               <img src={logo} alt="Urban Oasis" className="h-20 sm:h-24" />
