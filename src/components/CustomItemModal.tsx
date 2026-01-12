@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -37,7 +37,6 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
   const [unit, setUnit] = useState<'each' | 'lb'>('each');
   const [category, setCategory] = useState('');
   const [saveToDatabase, setSaveToDatabase] = useState(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -49,20 +48,6 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
       setSaveToDatabase(false);
     }
   }, [isOpen, categories]);
-
-  // Delayed auto-focus after modal animation completes
-  useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        nameInputRef.current?.focus();
-        // Scroll input into view after keyboard appears
-        setTimeout(() => {
-          nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
 
   // Format cents to display value (e.g., "1299" -> "12.99")
   const formatPriceDisplay = (cents: string): string => {
@@ -116,7 +101,6 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
 
         <div className="space-y-4 mb-6">
           <Input
-            ref={nameInputRef}
             label="Item Name"
             type="text"
             value={name}
