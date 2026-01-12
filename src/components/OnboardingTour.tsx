@@ -83,36 +83,6 @@ export function OnboardingTour({ steps, isActive, onComplete, onSkip }: Onboardi
     setPosition({ top, left, arrowPosition });
   }, [step, currentStep, steps.length]);
 
-  // Darken status bar when tour is active
-  useEffect(() => {
-    if (!isActive) return;
-
-    const originalColor = '#1c1917';
-    const darkColor = '#0a0a0a';
-
-    // Remove existing theme-color meta and create new one (iOS needs this to notice changes)
-    const existingMeta = document.querySelector('meta[name="theme-color"]');
-    if (existingMeta) {
-      existingMeta.remove();
-    }
-
-    const newMeta = document.createElement('meta');
-    newMeta.name = 'theme-color';
-    newMeta.content = darkColor;
-    document.head.appendChild(newMeta);
-
-    return () => {
-      const currentMeta = document.querySelector('meta[name="theme-color"]');
-      if (currentMeta) {
-        currentMeta.remove();
-      }
-      const restoredMeta = document.createElement('meta');
-      restoredMeta.name = 'theme-color';
-      restoredMeta.content = originalColor;
-      document.head.appendChild(restoredMeta);
-    };
-  }, [isActive]);
-
   useEffect(() => {
     if (!isActive) {
       setCurrentStep(0);

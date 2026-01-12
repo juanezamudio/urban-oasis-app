@@ -34,7 +34,7 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-12 sm:pt-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-12 sm:pt-4 overflow-hidden"
     >
       <div
         className="fixed inset-0 bg-black/70 backdrop-blur-sm"
@@ -42,7 +42,7 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
       />
       <div
         className={cn(
-          'relative bg-stone-300 w-full max-w-md rounded-2xl shadow-2xl transform transition-all animate-slide-up border border-stone-400/50 max-h-[calc(100vh-6rem)] sm:max-h-[calc(100vh-2rem)] overflow-y-auto',
+          'relative bg-stone-300 w-full max-w-md rounded-2xl shadow-2xl transform transition-all animate-slide-up border border-stone-400/50 max-h-[calc(100vh-6rem)] sm:max-h-[calc(100vh-2rem)] overflow-y-auto overscroll-contain',
           className
         )}
       >
