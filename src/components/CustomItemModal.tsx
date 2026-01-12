@@ -106,7 +106,6 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Specialty Jam"
-            autoFocus
           />
 
           <div>

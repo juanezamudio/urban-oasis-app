@@ -87,14 +87,29 @@ export function OnboardingTour({ steps, isActive, onComplete, onSkip }: Onboardi
   useEffect(() => {
     if (!isActive) return;
 
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    const originalColor = themeColorMeta?.getAttribute('content') || '#1c1917';
+    const originalColor = '#1c1917';
+    const darkColor = '#0a0a0a';
 
-    // Darken to match the tour overlay
-    themeColorMeta?.setAttribute('content', '#0a0a0a');
+    // Remove existing theme-color meta and create new one (iOS needs this to notice changes)
+    const existingMeta = document.querySelector('meta[name="theme-color"]');
+    if (existingMeta) {
+      existingMeta.remove();
+    }
+
+    const newMeta = document.createElement('meta');
+    newMeta.name = 'theme-color';
+    newMeta.content = darkColor;
+    document.head.appendChild(newMeta);
 
     return () => {
-      themeColorMeta?.setAttribute('content', originalColor);
+      const currentMeta = document.querySelector('meta[name="theme-color"]');
+      if (currentMeta) {
+        currentMeta.remove();
+      }
+      const restoredMeta = document.createElement('meta');
+      restoredMeta.name = 'theme-color';
+      restoredMeta.content = originalColor;
+      document.head.appendChild(restoredMeta);
     };
   }, [isActive]);
 
