@@ -37,8 +37,9 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-sm bg-stone-900 rounded-2xl border border-stone-800 shadow-2xl p-8">
+    <div className="h-screen bg-stone-950 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
+      <div className="w-full max-w-7xl flex flex-col items-center justify-center p-8 sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-y-auto">
+        <div className="w-full max-w-sm">
           {/* Logo/Header */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-3 sm:gap-4 bg-gradient-to-b from-stone-700/60 to-stone-800/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-stone-400/40 shadow-lg shadow-black/20 ring-1 ring-white/5">
@@ -75,7 +76,7 @@ export function Login() {
           </div>
 
           {/* Keypad */}
-          <div className="bg-stone-800 rounded-2xl p-4 border border-stone-700">
+          <div className="bg-stone-900 rounded-2xl p-4 border border-stone-700">
             <NumericKeypad
               value={pin}
               onChange={handlePinChange}
@@ -84,6 +85,8 @@ export function Login() {
               variant="dark"
             />
           </div>
+
+                  </div>
       </div>
 
       <style>{`
