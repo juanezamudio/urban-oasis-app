@@ -34,10 +34,9 @@ export function OnboardingTour({ steps, isActive, onComplete, onSkip }: Onboardi
 
     const target = document.querySelector(step.target);
     if (!target) {
-      // If target not found, try next step or complete
-      if (currentStep < steps.length - 1) {
-        setCurrentStep(currentStep + 1);
-      }
+      // If target not found, hide spotlight but don't auto-advance
+      setTargetRect(null);
+      setPosition({ top: window.innerHeight / 2 - 75, left: window.innerWidth / 2 - 150, arrowPosition: 'top' });
       return;
     }
 

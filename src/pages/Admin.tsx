@@ -493,9 +493,9 @@ export function Admin() {
 
             {/* Date Range Picker */}
             {dateView === 'range' && (
-              <div className="bg-stone-800 rounded-xl p-4 mb-4 border border-stone-700">
+              <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700 overflow-hidden">
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <label className="block text-xs text-stone-400 mb-1">Start Date</label>
                     <input
                       type="date"
@@ -505,7 +505,7 @@ export function Admin() {
                       className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <label className="block text-xs text-stone-400 mb-1">End Date</label>
                     <input
                       type="date"
@@ -648,7 +648,7 @@ export function Admin() {
         )}
 
         {activeTab === 'products' && (
-          <div className="p-4 flex flex-col h-[calc(100vh-200px)] sm:h-[calc(100vh-220px)] overflow-hidden">
+          <div className="p-4 flex flex-col h-full overflow-hidden pb-24">
             {/* Header with Upload Button */}
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h2 className="font-semibold text-stone-100">
@@ -741,9 +741,9 @@ export function Admin() {
 
             {/* Date Range Picker */}
             {dateView === 'range' && (
-              <div className="bg-stone-800 rounded-xl p-4 mb-4 border border-stone-700">
+              <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700 overflow-hidden">
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <label className="block text-xs text-stone-400 mb-1">Start Date</label>
                     <input
                       type="date"
@@ -753,7 +753,7 @@ export function Admin() {
                       className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <label className="block text-xs text-stone-400 mb-1">End Date</label>
                     <input
                       type="date"
@@ -782,87 +782,90 @@ export function Admin() {
                 <div className="mb-6">
                   {/* Primary row - 2 columns */}
                   <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div className="bg-stone-800 rounded-xl p-4 border border-stone-700 text-center">
-                      <p className="text-xs text-stone-400 font-medium uppercase tracking-wider mb-1">Total Revenue</p>
-                      <p className="font-display text-4xl font-bold text-emerald-400">
+                    <div className="bg-stone-800 rounded-xl p-3 sm:p-4 border border-stone-700 text-center">
+                      <p className="text-[10px] sm:text-xs text-stone-400 font-medium uppercase tracking-wider mb-1">Total Revenue</p>
+                      <p className="font-display text-2xl sm:text-4xl font-bold text-emerald-400">
                         {formatCurrency(displayTotal)}
                       </p>
-                      <p className="text-sm text-stone-500 mt-1">
+                      <p className="text-xs sm:text-sm text-stone-500 mt-1">
                         {formatCurrency(keyMetrics.revenuePerHour)}/hr avg
                       </p>
                     </div>
-                    <div className="bg-stone-800 rounded-xl p-4 border border-stone-700 text-center">
-                      <p className="text-xs text-stone-400 font-medium uppercase tracking-wider mb-1">Total Orders</p>
-                      <p className="font-display text-4xl font-bold text-stone-100">
+                    <div className="bg-stone-800 rounded-xl p-3 sm:p-4 border border-stone-700 text-center">
+                      <p className="text-[10px] sm:text-xs text-stone-400 font-medium uppercase tracking-wider mb-1">Total Orders</p>
+                      <p className="font-display text-2xl sm:text-4xl font-bold text-stone-100">
                         {displayOrderCount}
                       </p>
-                      <p className="text-sm text-stone-500 mt-1">
+                      <p className="text-xs sm:text-sm text-stone-500 mt-1">
                         {keyMetrics.ordersPerHour.toFixed(1)}/hr avg
                       </p>
                     </div>
                   </div>
-                  {/* Secondary row - 5 columns */}
-                  <div className="grid grid-cols-5 gap-2 mb-2">
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Avg Order</p>
-                      <p className="font-display text-xl font-bold text-emerald-400">
+                  {/* Secondary row - 3 items */}
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Avg Order</p>
+                      <p className="font-display text-base sm:text-xl font-bold text-emerald-400">
                         {formatCurrency(keyMetrics.avgOrderValue)}
                       </p>
                     </div>
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Largest</p>
-                      <p className="font-display text-xl font-bold text-amber-500">
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Largest</p>
+                      <p className="font-display text-base sm:text-xl font-bold text-amber-500">
                         {formatCurrency(keyMetrics.largestOrder)}
                       </p>
                     </div>
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Smallest</p>
-                      <p className="font-display text-xl font-bold text-stone-400">
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Smallest</p>
+                      <p className="font-display text-base sm:text-xl font-bold text-stone-400">
                         {formatCurrency(keyMetrics.smallestOrder)}
                       </p>
                     </div>
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Items Sold</p>
-                      <p className="font-display text-xl font-bold text-stone-100">
-                        {keyMetrics.totalItemsSold}
-                      </p>
-                    </div>
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Items/Order</p>
-                      <p className="font-display text-xl font-bold text-stone-100">
-                        {keyMetrics.avgItemsPerOrder.toFixed(1)}
-                      </p>
-                    </div>
                   </div>
-                  {/* Tertiary row - 3 columns */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Top Product</p>
-                      <p className="font-display text-base font-bold text-emerald-400 truncate" title={keyMetrics.topProduct?.name}>
+                  {/* Third row - Top Product & Top Category */}
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center overflow-hidden">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Top Product</p>
+                      <p className="font-display text-sm sm:text-base font-bold text-emerald-400 truncate" title={keyMetrics.topProduct?.name}>
                         {keyMetrics.topProduct?.name || '—'}
                       </p>
                       {keyMetrics.topProduct && (
-                        <p className="text-xs text-stone-500">{formatCurrency(keyMetrics.topProduct.revenue)}</p>
+                        <p className="text-[10px] sm:text-xs text-stone-500">{formatCurrency(keyMetrics.topProduct.revenue)}</p>
                       )}
                     </div>
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Top Category</p>
-                      <p className="font-display text-base font-bold text-amber-400 truncate" title={keyMetrics.topCategory?.category}>
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center overflow-hidden">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Top Category</p>
+                      <p className="font-display text-sm sm:text-base font-bold text-amber-400 truncate" title={keyMetrics.topCategory?.category}>
                         {keyMetrics.topCategory?.category || '—'}
                       </p>
                       {keyMetrics.topCategory && (
-                        <p className="text-xs text-stone-500">{formatCurrency(keyMetrics.topCategory.revenue)}</p>
+                        <p className="text-[10px] sm:text-xs text-stone-500">{formatCurrency(keyMetrics.topCategory.revenue)}</p>
                       )}
                     </div>
-                    <div className="bg-stone-800 rounded-xl p-3 border border-stone-700 text-center">
-                      <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Peak Hour</p>
-                      <p className="font-display text-xl font-bold text-stone-100">
+                  </div>
+                  {/* Fourth row - Items Sold, Items/Order, Peak Hour */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Items Sold</p>
+                      <p className="font-display text-base sm:text-xl font-bold text-stone-100">
+                        {keyMetrics.totalItemsSold}
+                      </p>
+                    </div>
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Items/Order</p>
+                      <p className="font-display text-base sm:text-xl font-bold text-stone-100">
+                        {keyMetrics.avgItemsPerOrder.toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center overflow-hidden">
+                      <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Peak Hour</p>
+                      <p className="font-display text-base sm:text-xl font-bold text-stone-100">
                         {keyMetrics.peakHour !== null
                           ? `${keyMetrics.peakHour > 12 ? keyMetrics.peakHour - 12 : keyMetrics.peakHour || 12}${keyMetrics.peakHour >= 12 ? 'pm' : 'am'}`
                           : '—'}
                       </p>
-                      <p className="text-xs text-stone-500">
-                        {keyMetrics.uniqueProducts} products · {keyMetrics.categoriesSold} categories
+                      <p className="text-[10px] sm:text-xs text-stone-500 truncate">
+                        {keyMetrics.uniqueProducts} prod · {keyMetrics.categoriesSold} cat
                       </p>
                     </div>
                   </div>
