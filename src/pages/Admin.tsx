@@ -556,7 +556,7 @@ export function Admin() {
 
             {/* Date Range Picker */}
             {dateView === 'range' && (
-              <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700">
+              <div className="bg-stone-800 rounded-xl py-3 px-2 sm:p-4 mb-4 border border-stone-700">
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <div className="flex-1">
                     <label className="block text-xs text-stone-400 mb-1">Start</label>
@@ -826,7 +826,7 @@ export function Admin() {
 
             {/* Date Range Picker */}
             {dateView === 'range' && (
-              <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700">
+              <div className="bg-stone-800 rounded-xl py-3 px-2 sm:p-4 mb-4 border border-stone-700">
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <div className="flex-1">
                     <label className="block text-xs text-stone-400 mb-1">Start</label>
