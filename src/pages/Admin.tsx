@@ -557,26 +557,26 @@ export function Admin() {
             {/* Date Range Picker */}
             {dateView === 'range' && (
               <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700">
-                <div className="flex gap-3 sm:gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs text-stone-400 mb-1">Start</label>
+                    <label className="block text-xs text-stone-400 mb-1">Start Date</label>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       max={endDate}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs text-stone-400 mb-1">End</label>
+                    <label className="block text-xs text-stone-400 mb-1">End Date</label>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate}
                       max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
@@ -827,26 +827,26 @@ export function Admin() {
             {/* Date Range Picker */}
             {dateView === 'range' && (
               <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700">
-                <div className="flex gap-3 sm:gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs text-stone-400 mb-1">Start</label>
+                    <label className="block text-xs text-stone-400 mb-1">Start Date</label>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       max={endDate}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs text-stone-400 mb-1">End</label>
+                    <label className="block text-xs text-stone-400 mb-1">End Date</label>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate}
                       max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
