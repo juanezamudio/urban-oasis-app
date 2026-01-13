@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useAuthStore, getCurrentPins, updatePins, subscribeToPins } from '../store/authStore';
 import { useAnnouncementStore, type AnnouncementType, ANNOUNCEMENT_CHAR_LIMIT } from '../store/announcementStore';
 import { useGoalStore } from '../store/goalStore';
@@ -556,27 +558,29 @@ export function Admin() {
 
             {/* Date Range Picker */}
             {dateView === 'range' && (
-              <div className="bg-stone-800 rounded-xl py-3 px-2 sm:p-4 mb-4 border border-stone-700">
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700">
+                <div className="flex gap-3">
                   <div className="flex-1">
                     <label className="block text-xs text-stone-400 mb-1">Start</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      max={endDate}
-                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    <DatePicker
+                      selected={new Date(startDate + 'T00:00:00')}
+                      onChange={(date: Date | null) => date && setStartDate(date.toISOString().split('T')[0])}
+                      maxDate={new Date(endDate + 'T00:00:00')}
+                      dateFormat="MMM d, yyyy"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      wrapperClassName="w-full"
                     />
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs text-stone-400 mb-1">End</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      min={startDate}
-                      max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    <DatePicker
+                      selected={new Date(endDate + 'T00:00:00')}
+                      onChange={(date: Date | null) => date && setEndDate(date.toISOString().split('T')[0])}
+                      minDate={new Date(startDate + 'T00:00:00')}
+                      maxDate={new Date()}
+                      dateFormat="MMM d, yyyy"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      wrapperClassName="w-full"
                     />
                   </div>
                 </div>
@@ -826,27 +830,29 @@ export function Admin() {
 
             {/* Date Range Picker */}
             {dateView === 'range' && (
-              <div className="bg-stone-800 rounded-xl py-3 px-2 sm:p-4 mb-4 border border-stone-700">
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div className="bg-stone-800 rounded-xl p-3 sm:p-4 mb-4 border border-stone-700">
+                <div className="flex gap-3">
                   <div className="flex-1">
                     <label className="block text-xs text-stone-400 mb-1">Start</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      max={endDate}
-                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    <DatePicker
+                      selected={new Date(startDate + 'T00:00:00')}
+                      onChange={(date: Date | null) => date && setStartDate(date.toISOString().split('T')[0])}
+                      maxDate={new Date(endDate + 'T00:00:00')}
+                      dateFormat="MMM d, yyyy"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      wrapperClassName="w-full"
                     />
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs text-stone-400 mb-1">End</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      min={startDate}
-                      max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    <DatePicker
+                      selected={new Date(endDate + 'T00:00:00')}
+                      onChange={(date: Date | null) => date && setEndDate(date.toISOString().split('T')[0])}
+                      minDate={new Date(startDate + 'T00:00:00')}
+                      maxDate={new Date()}
+                      dateFormat="MMM d, yyyy"
+                      className="w-full px-3 py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      wrapperClassName="w-full"
                     />
                   </div>
                 </div>
