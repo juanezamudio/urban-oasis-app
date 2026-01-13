@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAuthStore, getCurrentPins, updatePins } from '../store/authStore';
+import { useAuthStore, getCurrentPins, updatePins, subscribeToPins } from '../store/authStore';
 import { useProductStore } from '../store/productStore';
 import { useCartStore } from '../store/cartStore';
 import { useOrderStore } from '../store/orderStore';
@@ -105,6 +105,12 @@ export function POS() {
     return unsubscribe;
   }, [subscribeToProducts]);
 
+  // Subscribe to PIN changes from Firebase
+  useEffect(() => {
+    const unsubscribe = subscribeToPins();
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     if (showPinModal) {
       const pins = getCurrentPins();
@@ -182,11 +188,11 @@ export function POS() {
     setShowReceipt(true);
   }, []);
 
-  const handleSavePins = () => {
+  const handleSavePins = async () => {
     if (volunteerPin.length !== 4 || adminPin.length !== 4) {
       return;
     }
-    updatePins(volunteerPin, adminPin);
+    await updatePins(volunteerPin, adminPin);
     setShowPinModal(false);
   };
 

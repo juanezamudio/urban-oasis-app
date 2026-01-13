@@ -15,6 +15,7 @@ interface ProductState {
   uploadProducts: (products: Product[]) => Promise<void>;
   addProduct: (product: Product) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
+  clearAllProducts: () => Promise<void>;
   getCategories: () => string[];
 }
 
@@ -205,6 +206,34 @@ export const useProductStore = create<ProductState>()(
             await deleteDoc(productRef);
           } catch (error) {
             console.warn('Failed to delete product from Firebase:', error);
+          }
+        }
+      },
+
+      clearAllProducts: async () => {
+        const currentProducts = get().products;
+
+        // Clear local state first
+        set({ products: [] });
+
+        // If Firebase is configured, delete all from there too
+        if (isFirebaseConfigured && db) {
+          try {
+            const { collection, writeBatch, getDocs } = await import('firebase/firestore');
+            const productsRef = collection(db, 'products');
+            const snapshot = await getDocs(productsRef);
+
+            if (snapshot.docs.length > 0) {
+              const batch = writeBatch(db);
+              snapshot.docs.forEach((doc) => {
+                batch.delete(doc.ref);
+              });
+              await batch.commit();
+            }
+          } catch (error) {
+            console.warn('Failed to clear products from Firebase:', error);
+            // Restore local state if Firebase delete failed
+            set({ products: currentProducts });
           }
         }
       },

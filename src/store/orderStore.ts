@@ -38,8 +38,7 @@ export const useOrderStore = create<OrderState>()(
       setError: (error) => set({ error }),
 
       createOrder: async (items, total, paymentMethod) => {
-        const order: Order = {
-          id: generateId(),
+        const orderData = {
           items: items.map((item) => ({
             name: item.name,
             price: item.price,
@@ -51,28 +50,44 @@ export const useOrderStore = create<OrderState>()(
           paymentMethod,
           createdAt: new Date(),
           createdBy: getDeviceId(),
-          synced: !isFirebaseConfigured,
         };
 
-        // If Firebase is configured, try to save there
+        let order: Order;
+
+        // If Firebase is configured, save there first to get the Firebase document ID
         if (isFirebaseConfigured && db) {
           try {
             const { collection, addDoc, Timestamp } = await import('firebase/firestore');
             const ordersRef = collection(db, 'orders');
-            await addDoc(ordersRef, {
-              items: order.items,
-              total: order.total,
-              paymentMethod: order.paymentMethod,
-              createdAt: Timestamp.fromDate(order.createdAt),
-              createdBy: order.createdBy,
+            const docRef = await addDoc(ordersRef, {
+              ...orderData,
+              createdAt: Timestamp.fromDate(orderData.createdAt),
             });
-            order.synced = true;
+            // Use Firebase document ID as the order ID
+            order = {
+              id: docRef.id,
+              ...orderData,
+              synced: true,
+            };
           } catch (error) {
             console.warn('Failed to sync order to Firebase, saving locally:', error);
+            // Fall back to local ID if Firebase fails
+            order = {
+              id: generateId(),
+              ...orderData,
+              synced: false,
+            };
           }
+        } else {
+          // No Firebase, use local ID
+          order = {
+            id: generateId(),
+            ...orderData,
+            synced: false,
+          };
         }
 
-        // Always save to local state
+        // Save to local state
         set((state) => ({
           orders: [order, ...state.orders],
           allOrders: [order, ...state.allOrders],
@@ -91,17 +106,10 @@ export const useOrderStore = create<OrderState>()(
         // If Firebase is configured, try to delete there too
         if (isFirebaseConfigured && db) {
           try {
-            const { collection, query, where, getDocs, deleteDoc } = await import('firebase/firestore');
-            const ordersRef = collection(db, 'orders');
-
-            // Find the order document by matching the ID
-            // Since we use auto-generated Firebase IDs, we need to query
-            const q = query(ordersRef, where('__name__', '==', orderId));
-            const snapshot = await getDocs(q);
-
-            if (!snapshot.empty) {
-              await deleteDoc(snapshot.docs[0].ref);
-            }
+            const { doc, deleteDoc } = await import('firebase/firestore');
+            // Delete directly by document ID (since we now use Firebase document IDs)
+            const orderRef = doc(db, 'orders', orderId);
+            await deleteDoc(orderRef);
           } catch (error) {
             console.warn('Failed to delete order from Firebase:', error);
           }

@@ -31,8 +31,6 @@ export function UndoToast({
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 100) {
-          clearInterval(interval);
-          onExpire();
           return 0;
         }
         return prev - 100;
@@ -40,7 +38,14 @@ export function UndoToast({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isVisible, duration, onExpire]);
+  }, [isVisible, duration]);
+
+  // Handle expiration in a separate effect to avoid setState during render
+  useEffect(() => {
+    if (isVisible && timeLeft === 0) {
+      onExpire();
+    }
+  }, [isVisible, timeLeft, onExpire]);
 
   if (!isVisible) return null;
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore, getCurrentPins, updatePins } from '../store/authStore';
+import { useAuthStore, getCurrentPins, updatePins, subscribeToPins } from '../store/authStore';
 import { useProductStore } from '../store/productStore';
 import { useOrderStore } from '../store/orderStore';
 import { Button } from '../components/ui/Button';
@@ -61,7 +61,7 @@ type DateView = 'today' | 'range';
 export function Admin() {
   const navigate = useNavigate();
   const { role, hasHydrated } = useAuthStore();
-  const { products, uploadProducts, subscribeToProducts, deleteProduct } = useProductStore();
+  const { products, uploadProducts, subscribeToProducts, deleteProduct, clearAllProducts } = useProductStore();
   const {
     orders,
     subscribeToTodaysOrders,
@@ -78,6 +78,7 @@ export function Admin() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showClearAllModal, setShowClearAllModal] = useState(false);
   const [volunteerPin, setVolunteerPin] = useState('');
   const [adminPin, setAdminPin] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -94,6 +95,9 @@ export function Admin() {
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   const { isActive: isTourActive, completeOnboarding, skipOnboarding, restartOnboarding } = useOnboarding('admin');
+
+  // Delay chart rendering to avoid dimension warnings
+  const [chartsReady, setChartsReady] = useState(false);
 
   const adminTourSteps: TourStep[] = useMemo(() => [
     {
@@ -161,11 +165,27 @@ export function Admin() {
     };
   }, [hasHydrated, role, dateView, startDate, endDate, subscribeToTodaysOrders, subscribeToOrdersByDateRange]);
 
+  // Subscribe to PIN changes from Firebase
+  useEffect(() => {
+    const unsubscribe = subscribeToPins();
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     const pins = getCurrentPins();
     setVolunteerPin(pins.volunteerPin);
     setAdminPin(pins.adminPin);
   }, [showPinModal]);
+
+  // Delay chart rendering until insights tab is active and DOM is ready
+  useEffect(() => {
+    if (activeTab === 'insights') {
+      const timer = setTimeout(() => setChartsReady(true), 50);
+      return () => clearTimeout(timer);
+    } else {
+      setChartsReady(false);
+    }
+  }, [activeTab]);
 
   const handleFileUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,11 +237,11 @@ export function Admin() {
     setIsUploading(false);
   };
 
-  const handleSavePins = () => {
+  const handleSavePins = async () => {
     if (volunteerPin.length !== 4 || adminPin.length !== 4) {
       return;
     }
-    updatePins(volunteerPin, adminPin);
+    await updatePins(volunteerPin, adminPin);
     setShowPinModal(false);
   };
 
@@ -389,7 +409,7 @@ export function Admin() {
 
   // Daily sales trend
   const dailySalesTrend = useMemo(() => {
-    const dailyData: Record<string, { date: string; revenue: number; orders: number; items: number }> = {};
+    const dailyData: Record<string, { key: string; date: string; revenue: number; orders: number; items: number }> = {};
 
     orders.forEach((order) => {
       const date = new Date(order.createdAt);
@@ -397,7 +417,7 @@ export function Admin() {
       const displayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
       if (!dailyData[dateKey]) {
-        dailyData[dateKey] = { date: displayDate, revenue: 0, orders: 0, items: 0 };
+        dailyData[dateKey] = { key: dateKey, date: displayDate, revenue: 0, orders: 0, items: 0 };
       }
       dailyData[dateKey].revenue += order.total;
       dailyData[dateKey].orders += 1;
@@ -654,13 +674,25 @@ export function Admin() {
               <h2 className="font-semibold text-stone-100">
                 Products ({products.length})
               </h2>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowUploadModal(true)}
-              >
-                Upload CSV
-              </Button>
+              <div className="flex gap-2">
+                {products.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowClearAllModal(true)}
+                    className="!border-red-500/50 !text-red-400 hover:!bg-red-500/10"
+                  >
+                    Clear All
+                  </Button>
+                )}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  Upload CSV
+                </Button>
+              </div>
             </div>
 
             {/* Products List */}
@@ -877,7 +909,8 @@ export function Admin() {
                     <h3 className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-3">Sales Trend</h3>
                     <div className="bg-stone-800 rounded-xl p-4 border border-stone-700">
                       <div className="h-56">
-                        <ResponsiveContainer width="100%" height="100%">
+                        {chartsReady && (
+                        <ResponsiveContainer width="100%" height={200}>
                           <AreaChart data={dailySalesTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -924,12 +957,13 @@ export function Admin() {
                             />
                           </AreaChart>
                         </ResponsiveContainer>
+                        )}
                       </div>
                     </div>
                     {/* Daily breakdown table */}
                     <div className="mt-3 bg-stone-300 rounded-xl border border-stone-400/50 divide-y divide-stone-400/50 max-h-48 overflow-y-auto">
                       {[...dailySalesTrend].reverse().map((day) => (
-                        <div key={day.date} className="p-3 flex items-center justify-between">
+                        <div key={day.key} className="p-3 flex items-center justify-between">
                           <div>
                             <p className="font-medium text-stone-900">{day.date}</p>
                             <p className="text-sm text-stone-600">
@@ -1033,7 +1067,8 @@ export function Admin() {
                     {/* Chart */}
                     <div className="bg-stone-800 rounded-xl p-4 border border-stone-700 md:col-span-2">
                       <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
+                        {chartsReady && (
+                        <ResponsiveContainer width="100%" height={240}>
                           <BarChart
                             data={topByRevenue.slice(0, 5).map((p, i) => ({ ...p, index: i + 1 }))}
                             layout="vertical"
@@ -1079,6 +1114,7 @@ export function Admin() {
                             />
                           </BarChart>
                         </ResponsiveContainer>
+                        )}
                       </div>
                     </div>
                     {/* Table */}
@@ -1125,7 +1161,8 @@ export function Admin() {
                     {/* Chart */}
                     <div className="bg-stone-800 rounded-xl p-4 border border-stone-700 order-1 md:order-2 md:col-span-2">
                       <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
+                        {chartsReady && (
+                        <ResponsiveContainer width="100%" height={240}>
                           <BarChart
                             data={topByQuantity.slice(0, 5).map((p, i) => ({ ...p, index: i + 1 }))}
                             layout="vertical"
@@ -1170,6 +1207,7 @@ export function Admin() {
                             />
                           </BarChart>
                         </ResponsiveContainer>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1447,6 +1485,44 @@ export function Admin() {
               }}
             >
               Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Clear All Products Modal */}
+      <Modal isOpen={showClearAllModal} onClose={() => setShowClearAllModal(false)}>
+        <div className="p-6">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-stone-900 text-center mb-2">
+            Clear All Products?
+          </h2>
+          <p className="text-stone-600 text-center mb-6">
+            Are you sure you want to delete all <span className="font-semibold">{products.length} products</span>?
+            <br />
+            <span className="text-sm text-stone-500">This action cannot be undone.</span>
+          </p>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowClearAllModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 !bg-red-600 hover:!bg-red-700"
+              onClick={() => {
+                clearAllProducts();
+                setShowClearAllModal(false);
+              }}
+            >
+              Clear All
             </Button>
           </div>
         </div>

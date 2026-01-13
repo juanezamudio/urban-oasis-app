@@ -43,15 +43,15 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
       {/* Mobile: bottom sheet, Desktop: centered modal */}
       <div
         className={cn(
-          'fixed left-0 right-0 bottom-24 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
-          'bg-stone-300 w-full sm:max-w-md rounded-2xl shadow-2xl',
+          'fixed left-0 right-0 bottom-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
+          'bg-stone-300 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl',
           'transform transition-all animate-slide-up sm:animate-fade-in',
-          'border border-stone-400/50',
-          'max-h-[70vh] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col',
+          'border border-stone-400/50 border-b-0 sm:border-b',
+          'max-h-[85vh] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col',
           className
         )}
       >
-        <div className="overflow-y-auto overscroll-contain flex-1">
+        <div className="overflow-y-auto overscroll-contain flex-1 pb-24 sm:pb-0">
           {children}
         </div>
       </div>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore, validatePin } from '../store/authStore';
+import { useAuthStore, validatePin, subscribeToPins } from '../store/authStore';
 import { NumericKeypad } from '../components/NumericKeypad';
 import { InstallPrompt } from '../components/InstallPrompt';
 import logo from '../assets/uop-logo.png';
@@ -11,6 +11,12 @@ export function Login() {
   const [isShaking, setIsShaking] = useState(false);
   const navigate = useNavigate();
   const setRole = useAuthStore((state) => state.setRole);
+
+  // Subscribe to PIN changes from Firebase
+  useEffect(() => {
+    const unsubscribe = subscribeToPins();
+    return unsubscribe;
+  }, []);
 
   const handlePinChange = (value: string) => {
     setError('');
