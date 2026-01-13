@@ -21,7 +21,9 @@ A mobile-first Progressive Web App (PWA) for volunteers at the Urban Oasis Proje
 - **CSV Export** - Export orders to CSV for accounting/record-keeping
 - **Product Management** - Upload products via CSV with preview before confirming
 - **Delete Orders/Products** - Remove individual orders or products with confirmation modal
-- **PIN Settings** - Update volunteer and admin access PINs
+- **Bulk Delete Orders** - Delete all orders for today or within a selected date range
+- **Clear All Products** - Remove all products from the database at once
+- **PIN Settings** - Update volunteer and admin access PINs (synced across all devices)
 - **Insights Tab** - Sales analytics with key metrics and visualizations:
   - Total revenue and orders with per-hour averages
   - Average order value, largest/smallest orders
@@ -32,15 +34,44 @@ A mobile-first Progressive Web App (PWA) for volunteers at the Urban Oasis Proje
   - Top products by revenue and quantity (charts + data tables)
   - Daily sales trend area chart
 
+### Quick Favorites
+- **Personal Favorites** - Pin frequently-used products to a favorites row for quick access
+- **Device-Local Storage** - Favorites saved per device (localStorage)
+- **One-Tap Toggle** - Star icon on product cards to add/remove favorites
+- **Quick Add** - Tap favorited product to instantly add to cart
+
+### Daily Sales Goal
+- **Admin-Set Target** - Set a daily revenue goal visible on all POS screens
+- **Real-Time Progress** - Progress bar updates as orders are completed
+- **Goal Celebration** - Visual celebration when goal is reached
+- **Firebase Synced** - Goal syncs across all devices in real-time
+
+### Discount Support
+- **Preset Discounts** - Quick buttons for common discounts (10%, 20%, Senior 15%, End of Day 25%)
+- **Custom Discounts** - Enter any percentage or fixed amount
+- **Discount Labels** - Name discounts for reporting (e.g., "Senior Discount")
+- **Receipt Integration** - Discounts shown on receipts with amount saved
+- **Order Tracking** - Discount details recorded in order data for analytics
+
+### Announcement Banner
+- **Admin Messages** - Post announcements visible on all POS screens
+- **Multiple Announcements** - Support for multiple active announcements
+- **Auto-Scroll Carousel** - Announcements rotate every 3 seconds
+- **Type Styling** - Info (blue), Warning (amber), Urgent (red) color coding
+- **Character Limit** - 50 character limit for concise, impactful messages
+- **Firebase Synced** - Announcements sync across all devices in real-time
+
 ### User Experience
 - **Onboarding Tour** - Guided tooltip tour for new users (volunteers and admins)
 - **Unified Navigation** - Consistent bottom nav bar across all pages
 - **Settings Access** - Settings accessible from nav bar (PIN management for admins, tour restart)
 - **Mobile Optimized** - Horizontally scrollable filters, hidden scrollbars, fixed viewport
 - **Branded Design** - Consistent header badge with logo and "Harvest Point™" wordmark
+- **Responsive Status Bar** - Daily goal and announcements adapt to screen size
 
 ### Digital Receipts
 - **Screen Receipt** - Styled receipt displayed after each order with order details
+- **Scrollable Content** - Long receipts scroll within modal with action buttons always visible
 - **Share via AirDrop** - Native share button for iOS/Android (AirDrop, Messages, etc.)
 - **QR Code Receipt** - Customers scan to view receipt on their phone
 - **Persistent Receipts** - Receipts accessible via URL, fetched from Firebase
@@ -95,6 +126,10 @@ service cloud.firestore {
     }
     match /orders/{orderId} {
       allow read, write: if true; // Tighten for production
+    }
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if true; // Tighten for production
     }
   }
 }
@@ -168,7 +203,10 @@ src/
 │   ├── ReceiptModal     # Digital receipt with QR code
 │   ├── SyncStatus       # Offline/sync status indicator
 │   ├── OnboardingTour   # Guided tour component
-│   └── InstallPrompt    # PWA install instructions
+│   ├── InstallPrompt    # PWA install instructions
+│   ├── DailyGoalBanner  # Sales goal progress bar
+│   ├── AnnouncementBanner # Auto-scrolling announcements
+│   └── DiscountModal    # Discount selection interface
 ├── hooks/
 │   ├── useOnboarding    # Tour state management
 │   └── useOnlineStatus  # Network connectivity detection
@@ -179,9 +217,12 @@ src/
 │   └── Receipt          # Public receipt view (via QR code)
 ├── store/
 │   ├── authStore        # Authentication & PINs
-│   ├── cartStore        # Shopping cart
+│   ├── cartStore        # Shopping cart (with discount support)
 │   ├── productStore     # Products
-│   └── orderStore       # Orders
+│   ├── orderStore       # Orders
+│   ├── favoritesStore   # Quick favorites (localStorage)
+│   ├── goalStore        # Daily sales goal (Firebase)
+│   └── announcementStore # Announcements (Firebase)
 ├── lib/
 │   ├── firebase         # Firebase config
 │   ├── csv              # CSV parsing/export
@@ -226,6 +267,15 @@ src/
 - [x] Admin delete functionality (orders and products)
 - [x] Delete confirmation modals
 - [x] Consistent category badge colors across app
+- [x] Firebase PIN sync (PINs stored in cloud, synced across devices)
+- [x] Bulk delete orders (all orders for today or date range)
+- [x] Clear all products feature
+- [x] Scrollable receipt modal with fixed action buttons
+- [x] Quick favorites row (device-local pinned products)
+- [x] Daily sales goal with progress bar (Firebase synced)
+- [x] Discount/promo support (preset + custom discounts)
+- [x] Announcement banner with auto-scrolling carousel (Firebase synced)
+- [x] Multiple announcement support with type styling (info/warning/urgent)
 
 ### Future Enhancements
 - [ ] Email receipt to customer

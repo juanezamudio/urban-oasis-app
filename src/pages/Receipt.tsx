@@ -48,6 +48,8 @@ export function Receipt() {
           const fetchedOrder: Order = {
             id: orderSnap.id,
             items: data.items || [],
+            subtotal: data.subtotal || data.total || 0,
+            discount: data.discount || undefined,
             total: data.total || 0,
             paymentMethod: data.paymentMethod || 'cash',
             createdAt: data.createdAt?.toDate() || new Date(),
@@ -167,6 +169,24 @@ export function Receipt() {
 
             {/* Divider */}
             <div className="border-t border-dashed border-stone-200 my-4" />
+
+            {/* Subtotal & Discount */}
+            {order.discount && order.discount.amount > 0 && (
+              <>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm text-stone-600">Subtotal</span>
+                  <span className="text-sm text-stone-600">
+                    {formatCurrency(order.subtotal)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-emerald-600">{order.discount.label}</span>
+                  <span className="text-sm text-emerald-600">
+                    -{formatCurrency(order.discount.amount)}
+                  </span>
+                </div>
+              </>
+            )}
 
             {/* Total */}
             <div className="flex justify-between items-center mb-2">

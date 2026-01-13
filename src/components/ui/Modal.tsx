@@ -6,9 +6,13 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  /** Disable bottom padding (used when no navbar is present) */
+  noBottomPadding?: boolean;
+  /** Disable internal scroll wrapper (when children handle their own scrolling) */
+  noInternalScroll?: boolean;
 }
 
-export function Modal({ isOpen, onClose, children, className }: ModalProps) {
+export function Modal({ isOpen, onClose, children, className, noBottomPadding, noInternalScroll }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,9 +55,13 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
           className
         )}
       >
-        <div className="overflow-y-auto overscroll-contain flex-1 pb-24 sm:pb-0">
-          {children}
-        </div>
+        {noInternalScroll ? (
+          children
+        ) : (
+          <div className={cn("overflow-y-auto overscroll-contain flex-1", noBottomPadding ? "" : "pb-24 sm:pb-0")}>
+            {children}
+          </div>
+        )}
       </div>
       <style>{`
         @keyframes slide-up {

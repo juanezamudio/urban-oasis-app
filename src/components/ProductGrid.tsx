@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Product } from '../types';
 import { ProductCard } from './ProductCard';
-import { cn } from '../lib/utils';
+import { cn, formatPrice } from '../lib/utils';
+import { useFavoritesStore } from '../store/favoritesStore';
 
 interface ProductGridProps {
   products: Product[];
@@ -13,6 +14,12 @@ interface ProductGridProps {
 export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoading }: ProductGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const { favoriteIds } = useFavoritesStore();
+
+  // Get favorite products (maintain order from favoriteIds)
+  const favoriteProducts = favoriteIds
+    .map((id) => products.find((p) => p.id === id))
+    .filter((p): p is Product => p !== undefined);
 
   // Get unique categories, with "Other" always last
   const categories = Array.from(new Set(products.map((p) => p.category)))
@@ -115,6 +122,28 @@ export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoa
           ))}
         </div>
       </div>
+
+      {/* Favorites Row */}
+      {favoriteProducts.length > 0 && (
+        <div className="pl-4 sm:pl-6 py-3 border-b border-stone-800 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 pr-4 sm:pr-6">
+            {favoriteProducts.map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => onProductClick(product)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full hover:bg-amber-500/20 transition-all shrink-0"
+                >
+                  <span className="text-sm font-medium text-stone-200 whitespace-nowrap">
+                    {product.name}
+                  </span>
+                  <span className="text-xs text-amber-400 font-medium">
+                    {formatPrice(product.price, product.unit)}
+                  </span>
+                </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Product Grid */}
       <div data-tour="products" className="flex-1 overflow-y-auto p-4 sm:p-6 pb-40">

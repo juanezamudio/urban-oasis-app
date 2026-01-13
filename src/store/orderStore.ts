@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Order, CartItem, PaymentMethod } from '../types';
+import type { Order, CartItem, PaymentMethod, OrderDiscount } from '../types';
 import { db, isFirebaseConfigured } from '../lib/firebase';
 import { generateId, getDeviceId, getTodayStart, isSameDay } from '../lib/utils';
 
@@ -13,8 +13,15 @@ interface OrderState {
   setOrders: (orders: Order[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  createOrder: (items: CartItem[], total: number, paymentMethod: PaymentMethod) => Promise<Order>;
+  createOrder: (
+    items: CartItem[],
+    subtotal: number,
+    total: number,
+    paymentMethod: PaymentMethod,
+    discount?: OrderDiscount
+  ) => Promise<Order>;
   deleteOrder: (orderId: string) => Promise<void>;
+  deleteOrders: (orderIds: string[]) => Promise<void>;
   subscribeToTodaysOrders: () => () => void;
   subscribeToOrdersByDateRange: (startDate: Date, endDate: Date) => () => void;
   getOrdersByDateRange: (startDate: Date, endDate: Date) => Order[];
@@ -37,8 +44,16 @@ export const useOrderStore = create<OrderState>()(
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
 
-      createOrder: async (items, total, paymentMethod) => {
-        const orderData = {
+      createOrder: async (items, subtotal, total, paymentMethod, discount) => {
+        const orderData: {
+          items: { name: string; price: number; unit: 'lb' | 'each'; quantity: number; lineTotal: number }[];
+          subtotal: number;
+          discount?: OrderDiscount;
+          total: number;
+          paymentMethod: PaymentMethod;
+          createdAt: Date;
+          createdBy: string;
+        } = {
           items: items.map((item) => ({
             name: item.name,
             price: item.price,
@@ -46,11 +61,17 @@ export const useOrderStore = create<OrderState>()(
             quantity: item.quantity,
             lineTotal: item.lineTotal,
           })),
+          subtotal,
           total,
           paymentMethod,
           createdAt: new Date(),
           createdBy: getDeviceId(),
         };
+
+        // Only add discount if it exists (Firebase doesn't accept undefined)
+        if (discount) {
+          orderData.discount = discount;
+        }
 
         let order: Order;
 
@@ -112,6 +133,42 @@ export const useOrderStore = create<OrderState>()(
             await deleteDoc(orderRef);
           } catch (error) {
             console.warn('Failed to delete order from Firebase:', error);
+          }
+        }
+      },
+
+      deleteOrders: async (orderIds: string[]) => {
+        if (orderIds.length === 0) return;
+
+        // Remove from local state first
+        const idsToDelete = new Set(orderIds);
+        set((state) => ({
+          orders: state.orders.filter((order) => !idsToDelete.has(order.id)),
+          allOrders: state.allOrders.filter((order) => !idsToDelete.has(order.id)),
+        }));
+
+        // If Firebase is configured, batch delete
+        if (isFirebaseConfigured && db) {
+          try {
+            const { doc, writeBatch } = await import('firebase/firestore');
+            const firestore = db; // TypeScript narrowing
+
+            // Firebase batch limit is 500, so chunk if needed
+            const chunks: string[][] = [];
+            for (let i = 0; i < orderIds.length; i += 500) {
+              chunks.push(orderIds.slice(i, i + 500));
+            }
+
+            for (const chunk of chunks) {
+              const batch = writeBatch(firestore);
+              chunk.forEach((orderId) => {
+                const orderRef = doc(firestore, 'orders', orderId);
+                batch.delete(orderRef);
+              });
+              await batch.commit();
+            }
+          } catch (error) {
+            console.warn('Failed to delete orders from Firebase:', error);
           }
         }
       },

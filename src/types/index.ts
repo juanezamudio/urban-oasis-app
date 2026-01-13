@@ -20,9 +20,20 @@ export interface CartItem {
 
 export type PaymentMethod = 'cash' | 'card' | 'voucher';
 
+export type DiscountType = 'percentage' | 'fixed' | 'none';
+
+export interface OrderDiscount {
+  type: DiscountType;
+  value: number;
+  label: string;
+  amount: number;
+}
+
 export interface Order {
   id: string;
   items: OrderItem[];
+  subtotal: number;
+  discount?: OrderDiscount;
   total: number;
   paymentMethod: PaymentMethod;
   createdAt: Date;

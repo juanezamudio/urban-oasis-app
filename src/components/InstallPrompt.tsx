@@ -75,7 +75,7 @@ export function InstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <Modal isOpen={showPrompt} onClose={handleRemindLater}>
+    <Modal isOpen={showPrompt} onClose={handleRemindLater} noBottomPadding>
       <div className="p-6">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-emerald-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
