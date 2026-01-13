@@ -69,7 +69,9 @@ export function POS() {
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [volunteerPin, setVolunteerPin] = useState('');
   const [adminPin, setAdminPin] = useState('');
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [goalInput, setGoalInput] = useState('');
+  const [goalSaved, setGoalSaved] = useState(false);
   const [announcementMessage, setAnnouncementMessage] = useState('');
   const [announcementType, setAnnouncementType] = useState<AnnouncementType>('info');
 
@@ -249,27 +251,36 @@ export function POS() {
 
   return (
     <div className="h-screen bg-stone-900 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
-      <div className="w-full max-w-7xl flex flex-col h-full sm:h-[calc(100vh-3rem)] sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden sm:pt-4">
-        {/* Header - Logo Section */}
-        <header className="px-4 sm:px-6 pb-2 safe-top-header sm:pt-4">
-          <div className="flex flex-col items-center">
-            <div data-tour="header" className="flex items-center gap-3 sm:gap-4 bg-gradient-to-b from-stone-700/60 to-stone-800/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-stone-400/40 shadow-lg shadow-black/20 ring-1 ring-white/5">
-              <img src={logo} alt="Urban Oasis" className="h-20 sm:h-24" />
-              <h1 className="font-display font-bold tracking-tight" style={{ lineHeight: '0.9' }}>
-                <span className="block text-xl sm:text-2xl text-stone-50">Harvest</span>
-                <span className="block text-xl sm:text-2xl text-emerald-400">
-                  Point<span className="text-stone-500 text-xs sm:text-sm align-top ml-0.5">™</span>
-                </span>
-              </h1>
-            </div>
-            <SyncStatus />
-          </div>
-        </header>
+      <div className="w-full max-w-7xl flex flex-col h-full sm:h-[calc(100vh-3rem)] sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden">
+        {/* Safe area spacer - only on mobile for notch */}
+        <div className="safe-top-header sm:hidden" />
 
-        {/* Status Bar - Daily Goal & Announcements */}
+        {/* Collapsible Header - Logo Section Only */}
         <div className={cn(
-          "px-4 sm:px-6 pt-6 pb-1",
-          "flex flex-col sm:flex-row gap-2"
+          "transition-all duration-300 ease-in-out overflow-hidden",
+          isHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-[130px] opacity-100"
+        )}>
+          <header className="px-4 sm:px-6 pb-1">
+            <div className="flex flex-col items-center">
+              <div data-tour="header" className="flex items-center gap-3 sm:gap-4 bg-gradient-to-b from-stone-700/60 to-stone-800/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-stone-400/40 shadow-lg shadow-black/20 ring-1 ring-white/5">
+                <img src={logo} alt="Urban Oasis" className="h-20 sm:h-24" />
+                <h1 className="font-display font-bold tracking-tight" style={{ lineHeight: '0.9' }}>
+                  <span className="block text-xl sm:text-2xl text-stone-50">Harvest</span>
+                  <span className="block text-xl sm:text-2xl text-emerald-400">
+                    Point<span className="text-stone-500 text-xs sm:text-sm align-top ml-0.5">™</span>
+                  </span>
+                </h1>
+              </div>
+              <SyncStatus />
+            </div>
+          </header>
+        </div>
+
+        {/* Status Bar - Daily Goal & Announcements (Always Visible) */}
+        <div className={cn(
+          "px-4 sm:px-6 pb-1",
+          "flex flex-col sm:flex-row gap-2",
+          isHeaderCollapsed ? "pt-0" : "pt-4"
         )}>
           <div className={cn(
             "w-full",
@@ -290,6 +301,7 @@ export function POS() {
         onProductClick={handleProductClick}
         onCustomItemClick={() => setIsCustomModalOpen(true)}
         isLoading={isLoading}
+        onScrollChange={setIsHeaderCollapsed}
       />
 
       {/* Cart */}
@@ -378,11 +390,23 @@ export function POS() {
                           const value = parseFloat(goalInput);
                           if (value > 0) {
                             setGoal(value);
+                            setGoalSaved(true);
+                            setTimeout(() => setGoalSaved(false), 2000);
                           }
                         }}
-                        disabled={!goalInput || parseFloat(goalInput) <= 0}
+                        disabled={!goalInput || parseFloat(goalInput) <= 0 || goalSaved}
+                        className={goalSaved ? '!bg-emerald-500 !text-white !border-emerald-500' : ''}
                       >
-                        Set Goal
+                        {goalSaved ? (
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Goal Set!
+                          </span>
+                        ) : (
+                          'Set Goal'
+                        )}
                       </Button>
                       {currentGoalTarget > 0 && (
                         <Button

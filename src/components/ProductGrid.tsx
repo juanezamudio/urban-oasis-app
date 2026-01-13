@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Product } from '../types';
 import { ProductCard } from './ProductCard';
 import { cn, formatPrice } from '../lib/utils';
@@ -9,12 +9,34 @@ interface ProductGridProps {
   onProductClick: (product: Product) => void;
   onCustomItemClick: () => void;
   isLoading?: boolean;
+  onScrollChange?: (isScrolled: boolean) => void;
 }
 
-export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoading }: ProductGridProps) {
+export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoading, onScrollChange }: ProductGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { favoriteIds } = useFavoritesStore();
+  const isCollapsedRef = useRef(false);
+
+  // Reset header on mount
+  useEffect(() => {
+    isCollapsedRef.current = false;
+    onScrollChange?.(false);
+  }, []);
+
+  // Handle scroll events
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!onScrollChange) return;
+    const scrollTop = e.currentTarget.scrollTop;
+
+    if (scrollTop > 60 && !isCollapsedRef.current) {
+      isCollapsedRef.current = true;
+      onScrollChange(true);
+    } else if (scrollTop < 30 && isCollapsedRef.current) {
+      isCollapsedRef.current = false;
+      onScrollChange(false);
+    }
+  };
 
   // Get favorite products (maintain order from favoriteIds)
   const favoriteProducts = favoriteIds
@@ -146,7 +168,7 @@ export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoa
       )}
 
       {/* Product Grid */}
-      <div data-tour="products" className="flex-1 overflow-y-auto p-4 sm:p-6 pb-40">
+      <div onScroll={handleScroll} data-tour="products" className="flex-1 overflow-y-auto p-4 sm:p-6 pb-40">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
             <svg
