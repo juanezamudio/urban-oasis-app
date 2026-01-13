@@ -565,7 +565,7 @@ export function Admin() {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       max={endDate}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                   <div className="flex-1">
@@ -576,7 +576,7 @@ export function Admin() {
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate}
                       max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
@@ -835,7 +835,7 @@ export function Admin() {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       max={endDate}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                   <div className="flex-1">
@@ -846,7 +846,7 @@ export function Admin() {
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate}
                       max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-1 py-1 sm:px-3 sm:py-2 bg-stone-700 border border-stone-600 rounded-lg text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
