@@ -85,6 +85,10 @@
     padding-top: env(safe-area-inset-top);
   }
 
+  .safe-top-compact {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
+
   .safe-top-header {
     padding-top: calc(4rem + env(safe-area-inset-top));
   }

@@ -47,8 +47,8 @@ export function AddItemModal({ product, isOpen, onClose, onAdd }: AddItemModalPr
 
         {/* Input Display */}
         <div className="bg-stone-200 rounded-2xl p-4 mb-4 border border-stone-400/50">
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-4xl font-bold text-stone-900 min-w-[120px] text-center">
+          <div className="flex items-baseline justify-center gap-1">
+            <span className="text-4xl font-bold text-stone-900">
               {value || '0'}
             </span>
             <span className="text-xl text-stone-600">

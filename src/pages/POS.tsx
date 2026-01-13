@@ -253,12 +253,15 @@ export function POS() {
     <div className="h-screen bg-stone-900 flex justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
       <div className="w-full max-w-7xl flex flex-col h-full sm:h-[calc(100vh-3rem)] sm:my-auto bg-stone-900 sm:rounded-2xl sm:border sm:border-stone-800 sm:shadow-2xl overflow-hidden">
         {/* Safe area spacer - only on mobile for notch */}
-        <div className="safe-top-header sm:hidden" />
+        <div className={cn(
+          "sm:hidden transition-all duration-300",
+          isHeaderCollapsed ? "safe-top-compact" : "safe-top-header"
+        )} />
 
-        {/* Collapsible Header - Logo Section Only */}
+        {/* Collapsible Header - Logo, Daily Goal & Announcements */}
         <div className={cn(
           "transition-all duration-300 ease-in-out overflow-hidden",
-          isHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-[130px] opacity-100"
+          isHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-[250px] opacity-100"
         )}>
           <header className="px-4 sm:px-6 pb-1">
             <div className="flex flex-col items-center">
@@ -274,25 +277,21 @@ export function POS() {
               <SyncStatus />
             </div>
           </header>
-        </div>
 
-        {/* Status Bar - Daily Goal & Announcements (Always Visible) */}
-        <div className={cn(
-          "px-4 sm:px-6 pb-1",
-          "flex flex-col sm:flex-row gap-2",
-          isHeaderCollapsed ? "pt-0" : "pt-4"
-        )}>
-          <div className={cn(
-            "w-full",
-            hasAnnouncements ? "sm:w-2/3" : "sm:w-full"
-          )}>
-            <DailyGoalBanner />
-          </div>
-          {hasAnnouncements && (
-            <div className="w-full sm:w-1/3">
-              <AnnouncementBanner />
+          {/* Status Bar - Daily Goal & Announcements */}
+          <div className="px-4 sm:px-6 pb-1 pt-4 flex flex-col sm:flex-row gap-2">
+            <div className={cn(
+              "w-full",
+              hasAnnouncements ? "sm:w-2/3" : "sm:w-full"
+            )}>
+              <DailyGoalBanner />
             </div>
-          )}
+            {hasAnnouncements && (
+              <div className="w-full sm:w-1/3">
+                <AnnouncementBanner />
+              </div>
+            )}
+          </div>
         </div>
 
       {/* Product Grid */}
@@ -302,6 +301,7 @@ export function POS() {
         onCustomItemClick={() => setIsCustomModalOpen(true)}
         isLoading={isLoading}
         onScrollChange={setIsHeaderCollapsed}
+        isHeaderCollapsed={isHeaderCollapsed}
       />
 
       {/* Cart */}

@@ -10,9 +10,10 @@ interface ProductGridProps {
   onCustomItemClick: () => void;
   isLoading?: boolean;
   onScrollChange?: (isScrolled: boolean) => void;
+  isHeaderCollapsed?: boolean;
 }
 
-export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoading, onScrollChange }: ProductGridProps) {
+export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoading, onScrollChange, isHeaderCollapsed }: ProductGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { favoriteIds } = useFavoritesStore();
@@ -78,7 +79,10 @@ export function ProductGrid({ products, onProductClick, onCustomItemClick, isLoa
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Search Bar */}
-      <div className="px-4 sm:px-6 py-4 border-b border-stone-800">
+      <div className={cn(
+        "px-4 sm:px-6 pb-4 border-b border-stone-800 transition-all duration-300",
+        isHeaderCollapsed ? "pt-1" : "pt-4"
+      )}>
         <div className="flex gap-3">
           <div data-tour="search" className="relative flex-1">
             <svg
