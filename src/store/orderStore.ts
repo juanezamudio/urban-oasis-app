@@ -128,11 +128,11 @@ export const useOrderStore = create<OrderState>()(
         if (isFirebaseConfigured && db) {
           try {
             const { doc, deleteDoc } = await import('firebase/firestore');
-            // Delete directly by document ID (since we now use Firebase document IDs)
             const orderRef = doc(db, 'orders', orderId);
             await deleteDoc(orderRef);
           } catch (error) {
-            console.warn('Failed to delete order from Firebase:', error);
+            console.error('Failed to delete order from Firebase:', error);
+            throw error;
           }
         }
       },

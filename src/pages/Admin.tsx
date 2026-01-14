@@ -1653,12 +1653,16 @@ export function Admin() {
             <Button
               variant="primary"
               className="flex-1 !bg-red-600 hover:!bg-red-700"
-              onClick={() => {
+              onClick={async () => {
                 if (deleteConfirm) {
-                  if (deleteConfirm.type === 'order') {
-                    deleteOrder(deleteConfirm.id);
-                  } else {
-                    deleteProduct(deleteConfirm.id);
+                  try {
+                    if (deleteConfirm.type === 'order') {
+                      await deleteOrder(deleteConfirm.id);
+                    } else {
+                      await deleteProduct(deleteConfirm.id);
+                    }
+                  } catch (error) {
+                    console.error('Failed to delete:', error);
                   }
                   setDeleteConfirm(null);
                 }
