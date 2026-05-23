@@ -10,12 +10,14 @@ import { useOrderStore } from '../store/orderStore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
+import { ReceiptModal } from '../components/ReceiptModal';
+import { EditOrderModal } from '../components/EditOrderModal';
 import { BottomNav } from '../components/BottomNav';
 import { OnboardingTour, type TourStep } from '../components/OnboardingTour';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { parseCSV, downloadSampleCSV, exportOrdersToCSV } from '../lib/csv';
 import { cn, formatCurrency, formatDate } from '../lib/utils';
-import type { Product } from '../types';
+import type { Product, Order } from '../types';
 import logo from '../assets/uop-logo.png';
 import {
   BarChart,
@@ -49,23 +51,13 @@ const PAYMENT_COLORS = {
   voucher: '#78716c', // stone-500 (neutral for voucher)
 };
 
-// Category badge colors - matching ProductCard.tsx
-const categoryBadgeColors: Record<string, string> = {
-  Vegetables: 'bg-emerald-600/20 text-emerald-700',
-  Fruits: 'bg-orange-500/20 text-orange-700',
-  Herbs: 'bg-green-600/20 text-green-700',
-  Dairy: 'bg-amber-500/20 text-amber-700',
-  'Dairy & Eggs': 'bg-amber-500/20 text-amber-700',
-  Other: 'bg-stone-400/20 text-stone-600',
-};
-
 type Tab = 'orders' | 'products' | 'insights';
 type DateView = 'today' | 'range';
 
 export function Admin() {
   const navigate = useNavigate();
   const { role, hasHydrated } = useAuthStore();
-  const { products, uploadProducts, subscribeToProducts, deleteProduct, clearAllProducts } = useProductStore();
+  const { products, uploadProducts, subscribeToProducts, updateProduct, deleteProduct, clearAllProducts, getCategories } = useProductStore();
   const {
     orders,
     subscribeToTodaysOrders,
@@ -74,6 +66,7 @@ export function Admin() {
     getTodayOrderCount,
     deleteOrder,
     deleteOrders,
+    updateOrder,
   } = useOrderStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('orders');
@@ -84,6 +77,16 @@ export function Admin() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showClearAllModal, setShowClearAllModal] = useState(false);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState<{ name: string; price: string; unit: 'lb' | 'each'; category: string }>({
+    name: '',
+    price: '',
+    unit: 'lb',
+    category: '',
+  });
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [viewOrder, setViewOrder] = useState<Order | null>(null);
+  const [editOrder, setEditOrder] = useState<Order | null>(null);
   const [showDeleteOrdersModal, setShowDeleteOrdersModal] = useState(false);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [announcementMessage, setAnnouncementMessage] = useState('');
@@ -280,6 +283,34 @@ export function Admin() {
   const handleCancelPreview = () => {
     setPreviewProducts(null);
     setIsUploading(false);
+  };
+
+  const handleOpenEdit = (product: Product) => {
+    setEditProduct(product);
+    setEditForm({
+      name: product.name,
+      price: product.price.toString(),
+      unit: product.unit,
+      category: product.category,
+    });
+  };
+
+  const handleSaveProduct = async () => {
+    if (!editProduct || isSavingProduct) return;
+
+    const price = parseFloat(editForm.price);
+    const name = editForm.name.trim();
+    const category = editForm.category.trim();
+    if (!name || !category || isNaN(price) || price < 0) return;
+
+    setIsSavingProduct(true);
+    try {
+      await updateProduct(editProduct.id, { name, price, unit: editForm.unit, category });
+    } catch (error) {
+      console.error('Failed to update product:', error);
+    }
+    setIsSavingProduct(false);
+    setEditProduct(null);
   };
 
   const handleSavePins = async () => {
@@ -673,7 +704,11 @@ export function Admin() {
                 </div>
               ) : (
                 orders.map((order) => (
-                  <div key={order.id} className="p-4">
+                  <div
+                    key={order.id}
+                    onClick={() => setViewOrder(order)}
+                    className="p-4 cursor-pointer hover:bg-stone-400/20 transition-colors"
+                  >
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-display font-semibold text-emerald-700">
@@ -695,11 +730,14 @@ export function Admin() {
                           {order.items.length} items
                         </span>
                         <button
-                          onClick={() => setDeleteConfirm({
-                            type: 'order',
-                            id: order.id,
-                            name: formatCurrency(order.total),
-                          })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirm({
+                              type: 'order',
+                              id: order.id,
+                              name: formatCurrency(order.total),
+                            });
+                          }}
                           className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Delete order"
                         >
@@ -769,17 +807,18 @@ export function Admin() {
                         {product.name}
                       </p>
                       <div className="flex items-center gap-3">
-                        <span
-                          className={cn(
-                            'text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap',
-                            categoryBadgeColors[product.category] || categoryBadgeColors.Other
-                          )}
-                        >
-                          {product.category}
-                        </span>
                         <p className="font-semibold text-emerald-700 whitespace-nowrap">
                           {formatCurrency(product.price)}/{product.unit}
                         </p>
+                        <button
+                          onClick={() => handleOpenEdit(product)}
+                          className="p-1.5 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                          title="Edit product"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
                         <button
                           onClick={() => setDeleteConfirm({
                             type: 'product',
@@ -939,7 +978,7 @@ export function Admin() {
                     <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center">
                       <p className="text-[9px] sm:text-[10px] text-stone-400 font-medium uppercase tracking-wider mb-1">Items Sold</p>
                       <p className="font-display text-base sm:text-xl font-bold text-stone-100">
-                        {keyMetrics.totalItemsSold}
+                        {Math.round(keyMetrics.totalItemsSold)}
                       </p>
                     </div>
                     <div className="bg-stone-800 rounded-xl p-2 sm:p-3 border border-stone-700 text-center">
@@ -1026,7 +1065,7 @@ export function Admin() {
                           <div>
                             <p className="font-medium text-stone-900">{day.date}</p>
                             <p className="text-sm text-stone-600">
-                              {day.orders} order{day.orders !== 1 ? 's' : ''} · {day.items} items
+                              {day.orders} order{day.orders !== 1 ? 's' : ''} · {Math.round(day.items)} items
                             </p>
                           </div>
                           <p className="font-display font-bold text-emerald-700">
@@ -1109,7 +1148,7 @@ export function Admin() {
                                     }}
                                   />
                                 </div>
-                                <p className="text-xs text-stone-500 mt-0.5">{cat.quantity} items sold</p>
+                                <p className="text-xs text-stone-500 mt-0.5">{Math.round(cat.quantity)} items sold</p>
                               </div>
                             );
                           })}
@@ -1185,7 +1224,7 @@ export function Admin() {
                           </span>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-stone-900 truncate">{product.name}</p>
-                            <p className="text-sm text-stone-600">{product.category} · {product.quantity} sold</p>
+                            <p className="text-sm text-stone-600">{product.category} · {Math.round(product.quantity)} sold</p>
                           </div>
                           <p className="font-display font-bold text-emerald-700">
                             {formatCurrency(product.revenue)}
@@ -1212,7 +1251,7 @@ export function Admin() {
                             <p className="text-sm text-stone-600">{product.category} · {formatCurrency(product.revenue)}</p>
                           </div>
                           <p className="font-display font-bold text-amber-700">
-                            {product.quantity} <span className="text-sm font-normal text-stone-600">units</span>
+                            {Math.round(product.quantity)} <span className="text-sm font-normal text-stone-600">units</span>
                           </p>
                         </div>
                       ))}
@@ -1246,7 +1285,7 @@ export function Admin() {
                               tickFormatter={(value) => `#${value}`}
                             />
                             <Tooltip
-                              formatter={(value) => [`${value} units`, 'Quantity']}
+                              formatter={(value) => [`${Math.round(Number(value))} units`, 'Quantity']}
                               labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ''}
                               cursor={{ fill: '#44403c' }}
                               contentStyle={{
@@ -1674,6 +1713,103 @@ export function Admin() {
         </div>
       </Modal>
 
+      {/* Edit Product Modal */}
+      <Modal isOpen={editProduct !== null} onClose={() => setEditProduct(null)}>
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-stone-900 mb-4">Edit Product</h2>
+          <div className="space-y-4 mb-6">
+            <Input
+              label="Name"
+              type="text"
+              value={editForm.name}
+              onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Product name"
+            />
+            <Input
+              label="Price"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={editForm.price}
+              onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+              placeholder="0.00"
+            />
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Unit</label>
+              <div className="flex gap-2">
+                {(['lb', 'each'] as const).map((unit) => (
+                  <button
+                    key={unit}
+                    onClick={() => setEditForm((f) => ({ ...f, unit }))}
+                    className={cn(
+                      'flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all',
+                      editForm.unit === unit
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    )}
+                  >
+                    {unit === 'lb' ? 'per lb' : 'each'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Input
+                label="Category"
+                type="text"
+                value={editForm.category}
+                onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
+                placeholder="e.g. Vegetables"
+              />
+              {getCategories().length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {getCategories().map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setEditForm((f) => ({ ...f, category: cat }))}
+                      className={cn(
+                        'text-xs px-2.5 py-1 rounded-full font-medium transition-colors',
+                        editForm.category === cat
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setEditProduct(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1"
+              onClick={handleSaveProduct}
+              disabled={
+                isSavingProduct ||
+                !editForm.name.trim() ||
+                !editForm.category.trim() ||
+                editForm.price === '' ||
+                isNaN(parseFloat(editForm.price)) ||
+                parseFloat(editForm.price) < 0
+              }
+            >
+              {isSavingProduct ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Clear All Products Modal */}
       <Modal isOpen={showClearAllModal} onClose={() => setShowClearAllModal(false)}>
         <div className="p-6">
@@ -1875,6 +2011,26 @@ export function Admin() {
           tourTarget="admin-nav"
         />
       )}
+
+      {/* Order Receipt Modal */}
+      <ReceiptModal
+        isOpen={viewOrder !== null}
+        order={viewOrder}
+        onClose={() => setViewOrder(null)}
+        onEdit={() => {
+          setEditOrder(viewOrder);
+          setViewOrder(null);
+        }}
+      />
+
+      {/* Edit Order Modal */}
+      <EditOrderModal
+        isOpen={editOrder !== null}
+        order={editOrder}
+        products={products}
+        onClose={() => setEditOrder(null)}
+        onSave={updateOrder}
+      />
 
       {/* Onboarding Tour */}
       <OnboardingTour

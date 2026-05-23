@@ -8,6 +8,11 @@ import type { DiscountType } from '../types';
 interface DiscountModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** When provided, operate on this subtotal/discount instead of the cart store. */
+  subtotal?: number;
+  currentDiscount?: { type: DiscountType; value: number; label: string };
+  onApply?: (type: DiscountType, value: number, label: string) => void;
+  onRemove?: () => void;
 }
 
 interface PresetDiscount {
@@ -23,13 +28,17 @@ const PRESET_DISCOUNTS: PresetDiscount[] = [
   { label: 'End of Day (25%)', type: 'percentage', value: 25 },
 ];
 
-export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
-  const { getSubtotal, applyDiscount, discount, removeDiscount } = useCartStore();
+export function DiscountModal({ isOpen, onClose, subtotal: subtotalProp, currentDiscount, onApply, onRemove }: DiscountModalProps) {
+  const cart = useCartStore();
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [customValue, setCustomValue] = useState('');
   const [customLabel, setCustomLabel] = useState('');
 
-  const subtotal = getSubtotal();
+  const controlled = onApply != null;
+  const subtotal = subtotalProp ?? cart.getSubtotal();
+  const discount = currentDiscount ?? cart.discount;
+  const applyDiscount = controlled ? onApply! : cart.applyDiscount;
+  const removeDiscount = controlled ? (onRemove ?? (() => {})) : cart.removeDiscount;
 
   const calculateDiscountAmount = (type: DiscountType, value: number) => {
     if (type === 'percentage') {

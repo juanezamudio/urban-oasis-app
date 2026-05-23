@@ -14,6 +14,7 @@ interface ProductState {
   subscribeToProducts: () => () => void;
   uploadProducts: (products: Product[]) => Promise<void>;
   addProduct: (product: Product) => Promise<void>;
+  updateProduct: (productId: string, updates: Partial<Pick<Product, 'name' | 'price' | 'unit' | 'category'>>) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   clearAllProducts: () => Promise<void>;
   getCategories: () => string[];
@@ -189,6 +190,28 @@ export const useProductStore = create<ProductState>()(
             products: [...state.products, productWithId],
             useLocalStorage: true,
           }));
+        }
+      },
+
+      updateProduct: async (productId, updates) => {
+        // Update local state first
+        set((state) => ({
+          products: state.products.map((product) =>
+            product.id === productId
+              ? { ...product, ...updates, updatedAt: new Date() }
+              : product
+          ),
+        }));
+
+        // If Firebase is configured, persist there too
+        if (isFirebaseConfigured && db) {
+          try {
+            const { doc, updateDoc } = await import('firebase/firestore');
+            const productRef = doc(db, 'products', productId);
+            await updateDoc(productRef, { ...updates, updatedAt: new Date() });
+          } catch (error) {
+            console.warn('Failed to update product in Firebase:', error);
+          }
         }
       },
 

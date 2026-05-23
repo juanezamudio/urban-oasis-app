@@ -10,9 +10,11 @@ interface ReceiptModalProps {
   isOpen: boolean;
   order: Order | null;
   onClose: () => void;
+  /** When provided, shows an "Edit Order" button. */
+  onEdit?: () => void;
 }
 
-export function ReceiptModal({ isOpen, order, onClose }: ReceiptModalProps) {
+export function ReceiptModal({ isOpen, order, onClose, onEdit }: ReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   if (!order) return null;
@@ -165,6 +167,18 @@ export function ReceiptModal({ isOpen, order, onClose }: ReceiptModalProps) {
 
         {/* Fixed Action Buttons */}
         <div className="flex-shrink-0 p-4 pt-3 bg-stone-300 border-t border-stone-400/30">
+          {onEdit && (
+            <Button
+              variant="outline"
+              className="w-full mb-3"
+              onClick={onEdit}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Order
+            </Button>
+          )}
           <div className="flex gap-3">
             <Button
               variant="outline"

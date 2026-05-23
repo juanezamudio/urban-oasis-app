@@ -13,6 +13,35 @@ export function Receipt() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // The global app shell locks scrolling (html/body/#root overflow hidden) for the
+  // PWA/POS. The public receipt is a normal scrolling document, so unlock while mounted.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById('root');
+    const targets = [html, body, root].filter(Boolean) as HTMLElement[];
+    const saved = targets.map((el) => ({
+      el,
+      overflow: el.style.overflow,
+      position: el.style.position,
+      height: el.style.height,
+    }));
+
+    targets.forEach((el) => {
+      el.style.overflow = 'auto';
+      el.style.position = 'static';
+      el.style.height = 'auto';
+    });
+
+    return () => {
+      saved.forEach(({ el, overflow, position, height }) => {
+        el.style.overflow = overflow;
+        el.style.position = position;
+        el.style.height = height;
+      });
+    };
+  }, []);
+
   useEffect(() => {
     if (!id) {
       setNotFound(true);

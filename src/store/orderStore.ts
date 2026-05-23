@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Order, CartItem, PaymentMethod, OrderDiscount } from '../types';
+import type { Order, OrderItem, CartItem, PaymentMethod, OrderDiscount } from '../types';
 import { db, isFirebaseConfigured } from '../lib/firebase';
 import { generateId, getDeviceId, getTodayStart, isSameDay } from '../lib/utils';
 
@@ -20,6 +20,16 @@ interface OrderState {
     paymentMethod: PaymentMethod,
     discount?: OrderDiscount
   ) => Promise<Order>;
+  updateOrder: (
+    orderId: string,
+    updates: {
+      items: OrderItem[];
+      subtotal: number;
+      total: number;
+      paymentMethod: PaymentMethod;
+      discount: OrderDiscount | null;
+    }
+  ) => Promise<void>;
   deleteOrder: (orderId: string) => Promise<void>;
   deleteOrders: (orderIds: string[]) => Promise<void>;
   subscribeToTodaysOrders: () => () => void;
@@ -115,6 +125,43 @@ export const useOrderStore = create<OrderState>()(
         }));
 
         return order;
+      },
+
+      updateOrder: async (orderId, updates) => {
+        const applyPatch = (order: Order): Order =>
+          order.id === orderId
+            ? {
+                ...order,
+                items: updates.items,
+                subtotal: updates.subtotal,
+                total: updates.total,
+                paymentMethod: updates.paymentMethod,
+                discount: updates.discount ?? undefined,
+              }
+            : order;
+
+        // Update local state first
+        set((state) => ({
+          orders: state.orders.map(applyPatch),
+          allOrders: state.allOrders.map(applyPatch),
+        }));
+
+        // If Firebase is configured, persist there too
+        if (isFirebaseConfigured && db) {
+          try {
+            const { doc, updateDoc, deleteField } = await import('firebase/firestore');
+            const orderRef = doc(db, 'orders', orderId);
+            await updateDoc(orderRef, {
+              items: updates.items,
+              subtotal: updates.subtotal,
+              total: updates.total,
+              paymentMethod: updates.paymentMethod,
+              discount: updates.discount ? updates.discount : deleteField(),
+            });
+          } catch (error) {
+            console.error('Failed to update order in Firebase:', error);
+          }
+        }
       },
 
       deleteOrder: async (orderId: string) => {

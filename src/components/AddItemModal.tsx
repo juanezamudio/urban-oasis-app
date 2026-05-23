@@ -10,16 +10,18 @@ interface AddItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (product: Product, quantity: number) => void;
+  initialQuantity?: number;
+  confirmLabel?: string;
 }
 
-export function AddItemModal({ product, isOpen, onClose, onAdd }: AddItemModalProps) {
+export function AddItemModal({ product, isOpen, onClose, onAdd, initialQuantity, confirmLabel = 'Add to Cart' }: AddItemModalProps) {
   const [value, setValue] = useState('');
 
   useEffect(() => {
     if (isOpen) {
-      setValue('');
+      setValue(initialQuantity != null ? initialQuantity.toString() : '');
     }
-  }, [isOpen, product]);
+  }, [isOpen, product, initialQuantity]);
 
   if (!product) return null;
 
@@ -82,7 +84,7 @@ export function AddItemModal({ product, isOpen, onClose, onAdd }: AddItemModalPr
             onClick={handleAdd}
             disabled={!isValid}
           >
-            Add to Cart
+            {confirmLabel}
           </Button>
         </div>
       </div>

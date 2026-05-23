@@ -174,6 +174,10 @@ export function POS() {
     setIsAddModalOpen(true);
   };
 
+  const handleCustomAddAnother = async (product: Product) => {
+    await addProduct(product);
+  };
+
   // Get unique categories for custom item modal, with "Other" always last
   const categories = Array.from(new Set(products.map((p) => p.category)))
     .filter(cat => cat !== 'Other')
@@ -320,6 +324,7 @@ export function POS() {
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onAdd={handleCustomItemCreate}
+        onAddAnother={handleCustomAddAnother}
         categories={categories}
       />
 

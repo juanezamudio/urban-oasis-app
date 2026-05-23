@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { cn } from '../lib/utils';
+import { useAuthStore } from '../store/authStore';
 import type { Product } from '../types';
 
 interface CustomItemModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Save the item to the current sale (and persist to catalog if saveToDatabase). */
   onAdd: (product: Product, saveToDatabase: boolean) => void;
+  /** Persist the item to the catalog without adding it to the sale (continuous add). */
+  onAddAnother: (product: Product) => void | Promise<void>;
   categories: string[];
 }
 
@@ -31,23 +36,31 @@ function normalizeName(input: string): string {
     .replace(/^./, char => char.toUpperCase());
 }
 
-export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomItemModalProps) {
+export function CustomItemModal({ isOpen, onClose, onAdd, onAddAnother, categories }: CustomItemModalProps) {
+  const isAdmin = useAuthStore((state) => state.role) === 'admin';
   const [name, setName] = useState('');
   const [priceCents, setPriceCents] = useState(''); // Store as cents string (e.g., "1299" for $12.99)
   const [unit, setUnit] = useState<'each' | 'lb'>('each');
   const [category, setCategory] = useState('');
   const [saveToDatabase, setSaveToDatabase] = useState(false);
+  const [lastAdded, setLastAdded] = useState<string | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  const resetForm = () => {
+    setName('');
+    setPriceCents('');
+    setUnit('each');
+    setCategory('');
+    setSaveToDatabase(false);
+  };
 
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setName('');
-      setPriceCents('');
-      setUnit('each');
-      setCategory(categories[0] || 'Other');
-      setSaveToDatabase(false);
+      resetForm();
+      setLastAdded(null);
     }
-  }, [isOpen, categories]);
+  }, [isOpen]);
 
   // Format cents to display value (e.g., "1299" -> "12.99")
   const formatPriceDisplay = (cents: string): string => {
@@ -66,41 +79,56 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
 
   const displayPrice = formatPriceDisplay(priceCents);
   const priceValue = priceCents ? parseInt(priceCents, 10) / 100 : 0;
+  const isValid = name.trim().length > 0 && priceValue > 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const buildProduct = (): Product => ({
+    id: `custom-${Date.now()}`,
+    name: normalizeName(name),
+    price: priceValue,
+    unit,
+    category: category.trim() || 'Other',
+    active: true,
+    updatedAt: new Date(),
+  });
 
-    if (!name.trim() || priceValue <= 0) {
-      return;
-    }
-
-    const normalizedName = normalizeName(name);
-
-    const customProduct: Product = {
-      id: `custom-${Date.now()}`,
-      name: normalizedName,
-      price: priceValue,
-      unit,
-      category: category || 'Other',
-      active: true,
-      updatedAt: new Date(),
-    };
-
-    onAdd(customProduct, saveToDatabase);
+  const handleSave = () => {
+    if (!isValid) return;
+    onAdd(buildProduct(), saveToDatabase);
     onClose();
   };
 
-  const isValid = name.trim() && priceValue > 0;
+  const handleAddAnother = async () => {
+    if (!isValid) return;
+    const product = buildProduct();
+    await onAddAnother(product);
+    setLastAdded(product.name);
+    resetForm();
+    nameRef.current?.focus();
+  };
+
+  const suggestions = categories.filter((c) => c && c !== 'Other');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="p-6">
-        <h2 className="font-display text-xl font-semibold text-stone-900 mb-6">
+      <div className="p-6">
+        <h2 className="font-display text-xl font-semibold text-stone-900 mb-4">
           Add Custom Item
         </h2>
 
+        {lastAdded && (
+          <div className="mb-4 p-2.5 bg-emerald-100 border border-emerald-300 rounded-xl flex items-center gap-2">
+            <svg className="w-4 h-4 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <p className="text-sm text-emerald-800">
+              Added <span className="font-semibold">{lastAdded}</span> to products
+            </p>
+          </div>
+        )}
+
         <div className="space-y-4 mb-6">
           <Input
+            ref={nameRef}
             label="Item Name"
             type="text"
             value={name}
@@ -109,9 +137,7 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
           />
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">
-              Price
-            </label>
+            <label className="block text-sm font-medium text-stone-700 mb-1.5">Price</label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500">$</span>
@@ -124,34 +150,75 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
                   className="w-full pl-8 pr-4 py-2.5 bg-white border border-stone-300 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
                 />
               </div>
-              <select
-                value={unit}
-                onChange={(e) => setUnit(e.target.value as 'each' | 'lb')}
-                className="px-4 py-2.5 bg-white border border-stone-300 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2357534e%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_8px_center] bg-no-repeat pr-10"
-              >
-                <option value="each">each</option>
-                <option value="lb">per lb</option>
-              </select>
+              <div className="flex gap-1 bg-stone-100 rounded-xl p-1">
+                {(['each', 'lb'] as const).map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setUnit(u)}
+                    className={cn(
+                      'px-4 py-1.5 rounded-lg text-sm font-medium transition-all',
+                      unit === u ? 'bg-emerald-600 text-white' : 'text-stone-600 hover:bg-stone-200'
+                    )}
+                  >
+                    {u === 'each' ? 'each' : 'per lb'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">
-              Category
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 pr-10 py-2.5 bg-white border border-stone-300 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2357534e%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_12px_center] bg-no-repeat"
-            >
-              {categories.filter(cat => cat !== 'Other').map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-              <option value="Other">Other</option>
-            </select>
-          </div>
+          {isAdmin ? (
+            <div>
+              <Input
+                label="Category"
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="e.g. Vegetables"
+              />
+              {suggestions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {suggestions.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategory(cat)}
+                      className={cn(
+                        'text-xs px-2.5 py-1 rounded-full font-medium transition-colors',
+                        category === cat
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Category</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[...suggestions, 'Other'].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={cn(
+                      'text-sm px-3 py-1.5 rounded-full font-medium transition-colors',
+                      category === cat
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -166,25 +233,20 @@ export function CustomItemModal({ isOpen, onClose, onAdd, categories }: CustomIt
           </label>
         </div>
 
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1"
-            onClick={onClose}
-          >
+        <div className="space-y-2">
+          <Button type="button" size="sm" variant="outline" className="w-full" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            className="flex-1"
-            disabled={!isValid}
-          >
-            Continue
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant="secondary" className="flex-1" onClick={handleSave} disabled={!isValid}>
+              Save
+            </Button>
+            <Button type="button" size="sm" variant="primary" className="flex-1" onClick={handleAddAnother} disabled={!isValid}>
+              Save & Add Another
+            </Button>
+          </div>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 }
