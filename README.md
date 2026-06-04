@@ -14,12 +14,17 @@ A mobile-first Progressive Web App (PWA) for volunteers at the Urban Oasis Proje
 - **Undo Orders** - 5-second window to undo accidental checkouts and restore cart
 - **Custom Item Entry** - Add items not in the product list with name, price, unit, and category
 - **Save Custom Items** - Option to save custom items to database for future use
+- **Continuous Add** - "Save & Add Another" keeps the modal open to add several products in a row
+- **Role-Based Categories** - Admins can type new categories; volunteers pick from existing ones (keeps the category list clean)
 - **Alphabetical Sorting** - Products sorted A-Z for easy browsing
 
 ### Admin Dashboard
 - **Order History** - View today's orders or filter by custom date range
+- **View Receipt** - Tap any past order to open its full receipt (with QR code and share)
+- **Edit Past Orders** - Adjust items, quantities, discount, and payment method on a completed order (useful after the undo window closes)
 - **CSV Export** - Export orders to CSV for accounting/record-keeping
 - **Product Management** - Upload products via CSV with preview before confirming
+- **Edit Products** - Edit an individual product's name, price, unit, and category in place
 - **Delete Orders/Products** - Remove individual orders or products with confirmation modal
 - **Bulk Delete Orders** - Delete all orders for today or within a selected date range
 - **Clear All Products** - Remove all products from the database at once
@@ -178,7 +183,7 @@ vercel
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript
+- **Frontend**: React 19 + TypeScript
 - **Build**: Vite
 - **Styling**: Tailwind CSS
 - **Fonts**: Fraunces (display), DM Sans (body)
@@ -201,6 +206,7 @@ src/
 │   ├── CustomItemModal  # Custom item entry modal
 │   ├── PaymentMethodModal # Payment selection (cash/card/voucher)
 │   ├── ReceiptModal     # Digital receipt with QR code
+│   ├── EditOrderModal   # Edit a past order (items, discount, payment)
 │   ├── SyncStatus       # Offline/sync status indicator
 │   ├── OnboardingTour   # Guided tour component
 │   ├── InstallPrompt    # PWA install instructions
@@ -276,17 +282,48 @@ src/
 - [x] Discount/promo support (preset + custom discounts)
 - [x] Announcement banner with auto-scrolling carousel (Firebase synced)
 - [x] Multiple announcement support with type styling (info/warning/urgent)
+- [x] Edit individual products (name, price, unit, category)
+- [x] View receipt for any past order from the admin order history
+- [x] Edit past orders (items, quantities, discount, payment method)
+- [x] Continuous "Save & Add Another" product entry
+- [x] Role-based category control (admin free-form, volunteers select-only)
 
 ### Future Enhancements
-- [ ] Email receipt to customer
-- [ ] Inventory tracking (stock levels, low stock alerts)
-- [ ] Shift management (start/end shift with cash counts)
-- [ ] Product image support
-- [ ] Barcode/QR code scanning
-- [ ] Multi-language support (Spanish)
-- [ ] Enhanced analytics (compare date ranges, export reports)
-- [ ] User activity logging
-- [ ] Vendor/supplier management
+
+Ideas for future development, grouped by area. This section is the single source of truth for the roadmap.
+
+**High Impact / Relatively Easy**
+- [ ] **Split Payment** — split an order across methods (e.g., $10 cash + $5 card)
+- [ ] **Dark Mode** — light/dark theme toggle for outdoor visibility and battery life
+
+**Operational**
+- [ ] **Volunteer Shift Tracking** — log who worked when; see sales per volunteer
+- [ ] **Cash Drawer Reconciliation** — start/end shift cash counts with discrepancy tracking
+- [ ] **Inventory Tracking** — stock levels, low-stock alerts, auto-hide sold-out items
+- [ ] **Training Mode** — sandbox for new volunteers to practice without affecting real data
+- [ ] **Volunteer Accounts** — individual logins instead of shared PINs (tracks who processed each order)
+
+**Customer Experience**
+- [ ] **Email / SMS Receipts** — send the receipt link at checkout (more accessible than QR for some)
+- [ ] **Print Support** — Bluetooth receipt printer for paper receipts
+- [ ] **Customer Loyalty** — punch-card or points-based rewards
+- [ ] **Product Images** — photos on product cards for faster identification (cached for offline)
+- [ ] **Multi-Language (Spanish)** — language toggle stored per device
+
+**Analytics**
+- [ ] **Compare Periods** — week-over-week, month-over-month, year-over-year
+- [ ] **Sales Heatmap** — busiest hours/days grid for volunteer scheduling
+- [ ] **Weather Correlation** — log weather conditions and correlate with sales
+- [ ] **Product Velocity** — flag slow-moving items to inform markdowns
+- [ ] **Advanced Reports** — export PDF reports for grants and board presentations
+
+**Vendor / Supply**
+- [ ] **Vendor Attribution** — tag products by supplier; generate payout reports
+- [ ] **Barcode / QR Scanning** — scan packaged goods to add to cart
+
+**Technical Polish**
+- [ ] **Tablet / Landscape Mode** — side-by-side product grid + cart layout for iPad
+- [ ] **Accessibility** — ARIA labels, high-contrast mode, larger touch-target option
 
 ## License
 

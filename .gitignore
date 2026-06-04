@@ -25,5 +25,8 @@ dist-ssr
 .vercel
 
 # Internal documents (not for repo)
-HARVEST_POINT_DIRECTORS_BRIEF.md
+docs/leadership-overview.md
+docs/capabilities-and-roadmap.md
+docs/director-brief.md
+docs/screenshots/
 *.pdf
